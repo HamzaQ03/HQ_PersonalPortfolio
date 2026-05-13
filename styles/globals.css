@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── PrimorStylish — splash signature font ────────────── */
+@font-face {
+  font-family: 'Primor Stylish';
+  src: url('/fonts/PrimorStylish.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ─── Kill native cursor everywhere — must be outside @layer so it
        wins over browser UA stylesheet and any component styles ───── */
 *, *::before, *::after {

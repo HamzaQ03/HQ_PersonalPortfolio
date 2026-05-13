@@ -9,67 +9,61 @@ import { splashState } from '@/lib/splashState'
    The right panel clips it to the right half (Qureshi).
    Each half rides outward with its panel when curtains open.
 ───────────────────────────────────────────────────────────── */
-function SignatureSVG() {
+function SignatureSVG({ side }: { side: 'L' | 'R' }) {
+  const hamzaId   = `splash-sig-reveal-hamza-${side}`
+  const qureshi = `splash-sig-reveal-qureshi-${side}`
+
   return (
     <svg
-      viewBox="0 0 860 240"
+      viewBox="0 0 900 220"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', display: 'block' }}
+      style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
       aria-hidden="true"
     >
-      {/* ── Hamza (x ≈ 60–438, left half of viewBox) ── */}
-      <path
-        pathLength={1000}
-        fill="none"
-        stroke="#c8a87c"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M 60 80 C 55 100, 50 130, 55 150 C 60 165, 70 160, 78 145
-           C 85 125, 95 95, 110 75 C 115 70, 122 78, 122 92
-           C 122 115, 118 138, 118 152 C 130 140, 145 130, 155 138
-           C 162 145, 158 158, 168 158 C 178 158, 180 142, 188 130
-           C 195 120, 205 122, 210 138 C 213 152, 220 158, 232 155
-           C 240 152, 248 138, 258 130 C 268 122, 280 125, 285 138
-           L 295 158 C 300 165, 312 162, 320 152
-           C 332 138, 342 125, 358 122 C 372 122, 378 135, 380 152
-           C 395 145, 408 138, 420 142 C 432 148, 432 160, 425 168
-           C 418 175, 405 172, 400 162 C 408 155, 425 158, 438 165"
-        style={{
-          strokeDasharray: 1000,
-          strokeDashoffset: 1000,
-          animation: 'splashSigDraw 8s linear 0s both',
-        }}
-      />
+      <defs>
+        {/* Hamza reveal: left-to-right wipe, 12.5% → 37.5% of 8 s */}
+        <clipPath id={hamzaId}>
+          <rect
+            x="0" y="0" height="220"
+            style={{ animation: 'splash-hamza-reveal 8s cubic-bezier(0.45,0.05,0.55,0.95) forwards' }}
+          />
+        </clipPath>
+        {/* Qureshi reveal: left-to-right wipe, 41.25% → 78.75% of 8 s */}
+        <clipPath id={qureshi}>
+          <rect
+            x="380" y="0" height="220"
+            style={{ animation: 'splash-qureshi-reveal 8s cubic-bezier(0.45,0.05,0.55,0.95) forwards' }}
+          />
+        </clipPath>
+      </defs>
 
-      {/* ── Qureshi (x ≈ 472–800, right half of viewBox) ── */}
-      <path
-        pathLength={1000}
-        fill="none"
-        stroke="#c8a87c"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M 510 105 C 495 100, 478 110, 472 130 C 468 148, 478 162, 495 162
-           C 510 162, 522 152, 525 138 C 528 122, 522 110, 515 108
-           C 525 130, 540 158, 552 178 C 558 188, 552 200, 540 198
-           C 532 196, 528 188, 530 180 C 545 170, 565 145, 572 130
-           C 580 118, 590 122, 590 135 L 590 158
-           C 600 145, 612 135, 625 138 C 638 142, 638 158, 628 165
-           C 618 168, 610 162, 612 152 C 622 145, 640 138, 658 132
-           C 668 130, 678 138, 678 150 C 678 162, 668 168, 656 162
-           C 648 158, 648 148, 660 142 C 678 135, 695 138, 708 145
-           C 718 152, 715 165, 705 168 C 695 170, 688 162, 692 155
-           C 705 148, 728 142, 745 138 C 752 138, 758 145, 754 152
-           C 750 158, 738 158, 738 152 L 738 80
-           M 745 140 C 760 145, 772 142, 782 138 L 782 168
-           M 800 100 L 800 168"
+      {/* "Hamza" in PrimorStylish, revealed left-to-right */}
+      <text
+        x="40" y="160"
+        fill="#ffffff"
+        clipPath={`url(#${hamzaId})`}
         style={{
-          strokeDasharray: 1000,
-          strokeDashoffset: 1000,
-          animation: 'splashSigDraw 8s linear 0s both',
+          fontFamily: "'Primor Stylish', cursive",
+          fontSize: '140px',
+          fontWeight: 400,
         }}
-      />
+      >
+        Hamza
+      </text>
+
+      {/* "Qureshi" in PrimorStylish, revealed left-to-right after pen-lift */}
+      <text
+        x="390" y="160"
+        fill="#ffffff"
+        clipPath={`url(#${qureshi})`}
+        style={{
+          fontFamily: "'Primor Stylish', cursive",
+          fontSize: '140px',
+          fontWeight: 400,
+        }}
+      >
+        Qureshi
+      </text>
     </svg>
   )
 }
@@ -135,13 +129,16 @@ export default function Splash() {
           85%, 100% { transform: translateX(100%); }
         }
 
-        /* ── Signature stroke-draw keyframes ────────────────────── */
-        /* stroke-dashoffset goes 1000 → 0 between 12.5% and 37.5%. */
-        /* Opacity fades in just after drawing starts (12.5%→18%).  */
-        @keyframes splashSigDraw {
-          0%, 12.5%   { stroke-dashoffset: 1000; opacity: 0; }
-          18%         { stroke-dashoffset: 777;  opacity: 1; }
-          37.5%, 100% { stroke-dashoffset: 0;    opacity: 1; }
+        /* ── Signature text-reveal keyframes ────────────────────── */
+        /* Rect width animates 0 → full, producing a left-to-right  */
+        /* wipe reveal on the <text> elements via clipPath.          */
+        @keyframes splash-hamza-reveal {
+          0%, 12.5% { width: 0px; }
+          37.5%, 100% { width: 380px; }
+        }
+        @keyframes splash-qureshi-reveal {
+          0%, 41.25% { width: 0px; }
+          78.75%, 100% { width: 520px; }
         }
       `}</style>
 
@@ -179,7 +176,7 @@ export default function Splash() {
               clipPath: 'inset(0 50% 0 0)', /* show left half only  */
             }}
           >
-            <SignatureSVG />
+            <SignatureSVG side="L" />
           </div>
         </div>
 
@@ -207,7 +204,7 @@ export default function Splash() {
               clipPath: 'inset(0 0 0 50%)', /* show right half only */
             }}
           >
-            <SignatureSVG />
+            <SignatureSVG side="R" />
           </div>
         </div>
 
