@@ -96,8 +96,7 @@ export default function Connect() {
               <h3 className="font-heading text-lg font-semibold text-white">Send a Message</h3>
             </div>
             <p className="font-mono text-teal/35 text-xs mb-6">
-              {/* TODO #11 */}
-              // Connect to EmailJS or Resend API
+              {'// Connect to EmailJS or Resend API'}
             </p>
 
             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>

@@ -91,7 +91,7 @@ export default function ScheduleMeetingModal({ open, onClose }: Props) {
                   color: '#c8a87c',
                   letterSpacing: 3,
                   margin: 0,
-                }}>// SCHEDULE</p>
+                }}>{'// SCHEDULE'}</p>
                 <h2 style={{
                   fontFamily: 'var(--font-space-grotesk), sans-serif',
                   fontWeight: 700,

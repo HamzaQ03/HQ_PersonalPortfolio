@@ -49,7 +49,7 @@ export default function About() {
               {/* Tagline */}
               <p className="font-mono text-teal text-sm mb-5 tracking-wide">
                 {/* TODO #3 — Add your tagline */}
-                &gt; "Your tagline goes here."
+                {`> "Your tagline goes here."`}
               </p>
 
               {/* Bio line 1 */}

@@ -596,7 +596,7 @@ export default function ReviewsPage() {
                 <GlassCard static>
                   <div style={{ textAlign: 'center', padding: '12px 0' }}>
                     <p className="font-mono text-sm mb-3" style={{ color: A }}>
-                      // THANK YOU
+                      {'// THANK YOU'}
                     </p>
                     <p className="font-mono text-sm" style={{ color: TM, lineHeight: 1.7 }}>
                       Thank you for your review!<br />

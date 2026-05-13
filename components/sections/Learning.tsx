@@ -50,7 +50,7 @@ export default function Learning() {
           viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.2 }}
         >
           <p className="font-mono text-teal/55 text-xs tracking-[0.2em] mb-6">
-            // ACTIVE CERTIFICATIONS
+            {'// ACTIVE CERTIFICATIONS'}
           </p>
 
           <div className="flex flex-wrap gap-4">
@@ -88,7 +88,7 @@ export default function Learning() {
           viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }}
         >
           <p className="font-mono text-amber-400/55 text-xs tracking-[0.2em] mb-6">
-            // IN PROGRESS
+            {'// IN PROGRESS'}
           </p>
 
           <div className="flex flex-wrap gap-4">
