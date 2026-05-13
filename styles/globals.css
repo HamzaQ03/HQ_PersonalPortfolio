@@ -1,0 +1,196 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Kill native cursor everywhere — must be outside @layer so it
+       wins over browser UA stylesheet and any component styles ───── */
+*, *::before, *::after {
+  cursor: none !important;
+  box-sizing: border-box;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: #000000;
+    color: #f0f0f0;
+    overflow-x: hidden;
+  }
+}
+
+/* ─── Custom scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #000000; }
+::-webkit-scrollbar-thumb { background: #c8a87c; border-radius: 2px; }
+
+/* ─── Typing animation (CSS only) ──────────────────────── */
+@keyframes typing {
+  from { width: 0; }
+  to   { width: 32ch; }
+}
+@keyframes blink-cursor {
+  0%, 100% { border-color: #c8a87c; }
+  50%       { border-color: transparent; }
+}
+.typing-animation {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid #c8a87c;
+  width: 0;
+  animation:
+    typing       1.92s steps(32, end) 0.5s forwards,
+    blink-cursor 0.8s  step-end           infinite;
+}
+
+/* ─── Section scroll offset ────────────────────────────── */
+section { scroll-margin-top: 80px; }
+
+/* ─── Home page entry shockwave ring ───────────────── */
+@keyframes shockwave-ring {
+  0%   { width: 0;       height: 0;       opacity: 0.3; }
+  100% { width: 300vmax; height: 300vmax; opacity: 0;   }
+}
+
+/* ─── Audrey font (Cristina Pagnotta) ──────────────────────────── */
+@font-face {
+  font-family: 'Audrey';
+  src: url('/fonts/audrey/Audrey-Normal.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Audrey';
+  src: url('/fonts/audrey/Audrey-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Audrey';
+  src: url('/fonts/audrey/Audrey-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Splash screen — cinematic 7s intro ───────────────────────── */
+
+.splash-container {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* ── Curtain halves (Phase 1: 0s → 0.7s) ── */
+.splash-half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: #050505;
+  z-index: 5;
+}
+.splash-half-left {
+  left: 0;
+  animation: splashHalfL 0.7s cubic-bezier(0.7, 0, 0.3, 1) 0s both;
+}
+.splash-half-right {
+  right: 0;
+  animation: splashHalfR 0.7s cubic-bezier(0.7, 0, 0.3, 1) 0s both;
+}
+@keyframes splashHalfL {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes splashHalfR {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* ── Name SVG wrapper (Phases 2–4) ── */
+/* Keyframe percentages map to 7s total:              */
+/*   14% = 0.98s  (name starts fading in at ~1.0s)   */
+/*   50% = 3.5s   (name fully visible)                */
+/*   79% = 5.53s  (zoom begins)                       */
+/*  100% = 7.0s   (navigate to home)                  */
+.splash-name {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(90vw, 780px);
+  height: auto;
+  z-index: 10;
+  animation: splashNameWrap 7s ease-out 0s both;
+}
+@keyframes splashNameWrap {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1);  }
+  14%  { opacity: 0; transform: translate(-50%, -50%) scale(1);  }
+  50%  { opacity: 1; transform: translate(-50%, -50%) scale(1);  }
+  79%  { opacity: 1; transform: translate(-50%, -50%) scale(1);  }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(40); }
+}
+
+/* ── Per-letter fill (Phase 3) ── */
+/* animation-fill-mode: both applies 'from' during delay,           */
+/* ensuring letters are transparent before their turn.              */
+.splash-l-1, .splash-l-2,  .splash-l-3,  .splash-l-4,
+.splash-l-5, .splash-l-6,  .splash-l-7,  .splash-l-8,
+.splash-l-9, .splash-l-10, .splash-l-11, .splash-l-12 {
+  fill: transparent;
+}
+.splash-l-1  { animation: splashFill 0.4s ease-out 4.0s both; }
+.splash-l-2  { animation: splashFill 0.4s ease-out 4.2s both; }
+.splash-l-3  { animation: splashFill 0.4s ease-out 4.4s both; }
+.splash-l-4  { animation: splashFill 0.4s ease-out 4.6s both; }
+.splash-l-5  { animation: splashFill 0.4s ease-out 4.8s both; }
+.splash-l-6  { animation: splashFill 0.4s ease-out 5.1s both; }
+.splash-l-7  { animation: splashFill 0.4s ease-out 5.3s both; }
+.splash-l-8  { animation: splashFill 0.4s ease-out 5.5s both; }
+.splash-l-9  { animation: splashFill 0.4s ease-out 5.7s both; }
+.splash-l-10 { animation: splashFill 0.4s ease-out 5.9s both; }
+.splash-l-11 { animation: splashFill 0.4s ease-out 6.1s both; }
+.splash-l-12 { animation: splashFill 0.4s ease-out 6.3s both; }
+@keyframes splashFill {
+  from { fill: transparent; }
+  to   { fill: #ffffff; }
+}
+
+/* ── White flash (Phase 4 flare, z-index above SVG) ── */
+.splash-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  z-index: 15;
+  pointer-events: none;
+  animation: splashFlash 7s ease-out 0s forwards;
+}
+@keyframes splashFlash {
+  0%,  78% { opacity: 0;    }
+  83%       { opacity: 0.25; }
+  87%       { opacity: 0;    }
+  100%      { opacity: 0;    }
+}
+
+/* ─── Custom cursor breathing glow ─────────────────────────── */
+@keyframes cursorBreathe {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1;   }
+}
+
+/* ─── Calendly widget — clip iframe to container height ────── */
+.calendly-inline-widget {
+  overflow: hidden !important;
+}
+.calendly-inline-widget iframe {
+  height: calc(100vh - 120px) !important;
+  min-height: calc(100vh - 120px) !important;
+  overflow: hidden !important;
+  border: none !important;
+}
