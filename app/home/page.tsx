@@ -19,7 +19,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <>
+    <div className="home-page-reveal">
       {/* ── White overlay — bridges vault white flash ── */}
       <motion.div
         aria-hidden="true"
@@ -268,6 +268,6 @@ export default function HomePage() {
           }} />
         </motion.div>
       </motion.div>
-    </>
+    </div>
   )
 }

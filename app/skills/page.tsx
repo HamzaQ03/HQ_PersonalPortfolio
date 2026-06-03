@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, memo } from 'react'
 import { createPortal } from 'react-dom'
 
 /* ─────────────────────────────────────────────────────────────
@@ -29,39 +29,37 @@ const SKILLS_DATA: Record<string, CategoryData> = {
     id: 'technical', label: 'TECHNICAL', fullLabel: 'TECHNICAL SKILLS', icon: '▣',
     skills: [
       { name: 'Python Programming', years: 4, proficiency: 85 },
-      { name: 'VBA (Visual Basic for Applications)', years: 3, proficiency: 90 },
-      { name: 'SQL & SQLite', years: 3, proficiency: 80 },
+      { name: 'VBA Scripting & Automation', years: 3, proficiency: 90 },
+      { name: 'SQL & SQLite Databases', years: 3, proficiency: 80 },
       { name: 'PowerShell Scripting', years: 2, proficiency: 70 },
-      { name: 'Bash / Shell Scripting', years: 2, proficiency: 70 },
-      { name: 'HTML / CSS', years: 4, proficiency: 75 },
-      { name: 'JavaScript (Basic)', years: 2, proficiency: 60 },
-      { name: 'Git / GitHub Version Control', years: 3, proficiency: 75 },
+      { name: 'Bash & Shell Scripting', years: 2, proficiency: 70 },
+      { name: 'HTML & CSS', years: 4, proficiency: 75 },
+      { name: 'JavaScript Fundamentals', years: 2, proficiency: 60 },
+      { name: 'Git & GitHub Version Control', years: 3, proficiency: 75 },
       { name: 'R Programming', years: 2, proficiency: 65 },
       { name: 'MATLAB', years: 2, proficiency: 60 },
-      { name: 'Linux / Kali Linux Operations', years: 3, proficiency: 80 },
+      { name: 'Linux & Kali Linux Operations', years: 3, proficiency: 80 },
       { name: 'Windows Server Administration', years: 3, proficiency: 75 },
-      { name: 'Network Fundamentals', years: 3, proficiency: 75 },
-      { name: 'TCP/IP Protocol Suite', years: 3, proficiency: 75 },
-      { name: 'Active Directory', years: 2, proficiency: 70 },
-      { name: 'DNS & DHCP Configuration', years: 2, proficiency: 65 },
-      { name: 'Wireshark Packet Analysis', years: 3, proficiency: 80 },
-      { name: 'Vulnerability Scanning', years: 3, proficiency: 80 },
+      { name: 'Network Fundamentals & TCP/IP', years: 3, proficiency: 75 },
+      { name: 'Active Directory & Group Policy', years: 2, proficiency: 70 },
+      { name: 'DNS, DHCP & Network Services', years: 2, proficiency: 65 },
+      { name: 'Wireshark & Packet Analysis', years: 3, proficiency: 80 },
+      { name: 'Vulnerability Scanning & Assessment', years: 3, proficiency: 80 },
       { name: 'Penetration Testing Fundamentals', years: 2, proficiency: 70 },
-      { name: 'Network Security', years: 3, proficiency: 80 },
-      { name: 'Endpoint Security', years: 3, proficiency: 75 },
+      { name: 'Network Security & Defense', years: 3, proficiency: 80 },
+      { name: 'Endpoint Security & Protection', years: 3, proficiency: 75 },
       { name: 'Identity & Access Management (IAM)', years: 3, proficiency: 80 },
       { name: 'Multi-Factor Authentication (MFA)', years: 3, proficiency: 85 },
       { name: 'Single Sign-On (SSO)', years: 2, proficiency: 75 },
       { name: 'Privileged Access Management (PAM)', years: 2, proficiency: 70 },
-      { name: 'Encryption & Cryptography Fundamentals', years: 3, proficiency: 75 },
-      { name: 'PKI (Public Key Infrastructure)', years: 2, proficiency: 70 },
+      { name: 'Encryption & Cryptography', years: 3, proficiency: 75 },
+      { name: 'PKI & Digital Certificates', years: 2, proficiency: 70 },
       { name: 'Hash Functions & Digital Signatures', years: 2, proficiency: 75 },
       { name: 'TLS/SSL Configuration', years: 2, proficiency: 70 },
       { name: 'VPN & Remote Access Security', years: 2, proficiency: 70 },
-      { name: 'Firewall Configuration', years: 2, proficiency: 70 },
-      { name: 'Intrusion Detection Systems (IDS)', years: 2, proficiency: 70 },
-      { name: 'Intrusion Prevention Systems (IPS)', years: 2, proficiency: 70 },
-      { name: 'Security Information & Event Management (SIEM)', years: 3, proficiency: 75 },
+      { name: 'Firewall Configuration & Management', years: 2, proficiency: 70 },
+      { name: 'Intrusion Detection & Prevention (IDS/IPS)', years: 2, proficiency: 70 },
+      { name: 'SIEM Tools & Operations', years: 3, proficiency: 75 },
       { name: 'Splunk', years: 2, proficiency: 70 },
       { name: 'Microsoft Sentinel', years: 2, proficiency: 70 },
       { name: 'Wazuh', years: 2, proficiency: 65 },
@@ -69,20 +67,17 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Threat Intelligence Analysis', years: 2, proficiency: 70 },
       { name: 'Threat Modeling', years: 3, proficiency: 80 },
       { name: 'Indicators of Compromise (IoC)', years: 2, proficiency: 75 },
-      { name: 'Incident Response Planning', years: 3, proficiency: 80 },
-      { name: 'Incident Triage', years: 2, proficiency: 70 },
+      { name: 'Incident Response Planning & Triage', years: 3, proficiency: 80 },
       { name: 'Incident Response Documentation', years: 3, proficiency: 85 },
       { name: 'Digital Forensics', years: 3, proficiency: 80 },
       { name: 'Memory Forensics (Volatility)', years: 2, proficiency: 70 },
-      { name: 'Disk Forensics', years: 2, proficiency: 75 },
-      { name: 'File System Forensics (FAT/NTFS)', years: 2, proficiency: 75 },
+      { name: 'Disk & File System Forensics', years: 2, proficiency: 75 },
       { name: 'Master File Table (MFT) Analysis', years: 2, proficiency: 75 },
-      { name: 'File Carving', years: 2, proficiency: 75 },
+      { name: 'File Carving & Recovery', years: 2, proficiency: 75 },
       { name: 'Hex Editor Analysis (HxD, Bless)', years: 2, proficiency: 80 },
       { name: 'Sleuth Kit (fls, istat, blkcat)', years: 2, proficiency: 75 },
-      { name: 'RegRipper', years: 2, proficiency: 70 },
-      { name: 'Steganography Analysis', years: 2, proficiency: 70 },
-      { name: 'Registry Analysis', years: 2, proficiency: 70 },
+      { name: 'RegRipper & Registry Analysis', years: 2, proficiency: 70 },
+      { name: 'Steganography Detection', years: 2, proficiency: 70 },
       { name: 'Forensic Imaging', years: 2, proficiency: 70 },
       { name: 'Chain of Custody Documentation', years: 2, proficiency: 75 },
       { name: 'Capture-The-Flag (CTF) Competitions', years: 2, proficiency: 75 },
@@ -91,49 +86,38 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Web Application Security', years: 2, proficiency: 70 },
       { name: 'OWASP Top 10', years: 2, proficiency: 80 },
       { name: 'Burp Suite', years: 2, proficiency: 70 },
-      { name: 'Nmap Network Scanning', years: 3, proficiency: 80 },
-      { name: 'Nessus / Tenable', years: 2, proficiency: 75 },
-      { name: 'OpenVAS', years: 2, proficiency: 65 },
+      { name: 'Nmap & Network Scanning', years: 3, proficiency: 80 },
+      { name: 'Nessus & Tenable', years: 2, proficiency: 75 },
+      { name: 'OpenVAS & Qualys', years: 2, proficiency: 65 },
       { name: 'Metasploit Framework', years: 2, proficiency: 65 },
-      { name: 'John the Ripper', years: 2, proficiency: 65 },
-      { name: 'Hydra Brute Force', years: 2, proficiency: 65 },
-      { name: 'Aircrack-ng (Wireless)', years: 2, proficiency: 60 },
-      { name: 'Regex / Pattern Matching', years: 3, proficiency: 80 },
-      { name: 'Grep / Awk / Sed', years: 2, proficiency: 75 },
-      { name: 'Database Administration', years: 3, proficiency: 75 },
-      { name: 'Database Security', years: 3, proficiency: 75 },
-      { name: 'Backup & Recovery', years: 2, proficiency: 70 },
-      { name: 'Disaster Recovery Planning', years: 2, proficiency: 70 },
+      { name: 'John the Ripper & Hydra', years: 2, proficiency: 65 },
+      { name: 'Regex & Pattern Matching', years: 3, proficiency: 80 },
+      { name: 'Grep, Awk & Sed', years: 2, proficiency: 75 },
+      { name: 'Database Administration & Security', years: 3, proficiency: 75 },
+      { name: 'Backup, Recovery & DR Planning', years: 2, proficiency: 70 },
       { name: 'Business Continuity Planning', years: 2, proficiency: 70 },
       { name: 'Data Loss Prevention (DLP)', years: 2, proficiency: 70 },
       { name: 'Endpoint Detection & Response (EDR)', years: 2, proficiency: 70 },
-      { name: 'Configuration Management', years: 3, proficiency: 75 },
-      { name: 'Patch Management', years: 2, proficiency: 70 },
-      { name: 'Change Management', years: 3, proficiency: 80 },
-      { name: 'Asset Management', years: 3, proficiency: 80 },
-      { name: 'Inventory Management', years: 3, proficiency: 80 },
-      { name: 'Process Automation', years: 3, proficiency: 85 },
-      { name: 'Workflow Automation', years: 3, proficiency: 85 },
+      { name: 'Configuration & Patch Management', years: 3, proficiency: 75 },
+      { name: 'Change & Asset Management', years: 3, proficiency: 80 },
+      { name: 'Process & Workflow Automation', years: 3, proficiency: 85 },
       { name: 'Excel Macros & Advanced Functions', years: 4, proficiency: 90 },
       { name: 'Data Analytics & Reporting', years: 4, proficiency: 85 },
       { name: 'Data Visualization', years: 3, proficiency: 80 },
-      { name: 'Tableau', years: 2, proficiency: 65 },
-      { name: 'Power BI', years: 2, proficiency: 65 },
-      { name: 'Data Mining', years: 2, proficiency: 65 },
+      { name: 'Tableau & Power BI', years: 2, proficiency: 65 },
       { name: 'Statistical Analysis', years: 3, proficiency: 75 },
-      { name: 'Pandas (Python Library)', years: 2, proficiency: 70 },
-      { name: 'NumPy (Python Library)', years: 2, proficiency: 70 },
-      { name: 'API Integration', years: 2, proficiency: 65 },
-      { name: 'RESTful API Concepts', years: 2, proficiency: 65 },
-      { name: 'JSON / XML Data Formats', years: 3, proficiency: 80 },
-      { name: 'Markdown / Documentation Languages', years: 3, proficiency: 85 },
+      { name: 'Pandas & NumPy (Python Libraries)', years: 2, proficiency: 70 },
+      { name: 'API Integration & RESTful Services', years: 2, proficiency: 65 },
+      { name: 'JSON & XML Data Formats', years: 3, proficiency: 80 },
       { name: 'Virtualization (VMware, VirtualBox)', years: 2, proficiency: 70 },
-      { name: 'Container Fundamentals (Docker Basics)', years: 1, proficiency: 60 },
+      { name: 'Container Fundamentals (Docker)', years: 1, proficiency: 60 },
       { name: 'DevSecOps Principles', years: 2, proficiency: 65 },
       { name: 'Secure SDLC', years: 2, proficiency: 75 },
       { name: 'Code Review for Security', years: 2, proficiency: 65 },
-      { name: 'Static Application Security Testing (SAST)', years: 1, proficiency: 60 },
-      { name: 'Dynamic Application Security Testing (DAST)', years: 1, proficiency: 60 },
+      { name: 'SAST & DAST Concepts', years: 1, proficiency: 60 },
+      { name: 'Network Architecture & Design', years: 3, proficiency: 75 },
+      { name: 'Security Architecture Fundamentals', years: 2, proficiency: 70 },
+      { name: 'Cyber Threat Hunting', years: 2, proficiency: 65 },
     ],
   },
 
@@ -144,98 +128,82 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'NIST Risk Management Framework (RMF)', years: 3, proficiency: 95 },
       { name: 'NIST SP 800-37 Rev. 2', years: 3, proficiency: 95 },
       { name: 'NIST SP 800-53 Rev. 5', years: 3, proficiency: 95 },
-      { name: 'NIST SP 800-53A', years: 2, proficiency: 90 },
+      { name: 'NIST SP 800-53A (Assessment)', years: 2, proficiency: 90 },
       { name: 'NIST SP 800-137 (ISCM)', years: 2, proficiency: 90 },
       { name: 'NIST SP 800-171', years: 2, proficiency: 90 },
       { name: 'NIST SP 800-172', years: 2, proficiency: 80 },
       { name: 'NIST SP 800-30 (Risk Assessment)', years: 2, proficiency: 85 },
       { name: 'NIST SP 800-39 (Risk Management)', years: 2, proficiency: 80 },
       { name: 'NIST SP 800-60 (Categorization)', years: 2, proficiency: 85 },
-      { name: 'NIST SP 800-18 (SSPs)', years: 2, proficiency: 90 },
+      { name: 'NIST SP 800-18 (SSP Guide)', years: 2, proficiency: 90 },
       { name: 'NIST SP 800-70 (Configuration)', years: 2, proficiency: 75 },
+      { name: 'NIST SP 800-207 (Zero Trust)', years: 2, proficiency: 80 },
       { name: 'NIST AI Risk Management Framework', years: 2, proficiency: 85 },
       { name: 'NIST Privacy Framework', years: 2, proficiency: 80 },
-      { name: 'FedRAMP Low Baseline', years: 2, proficiency: 85 },
-      { name: 'FedRAMP Moderate Baseline', years: 2, proficiency: 90 },
-      { name: 'FedRAMP High Baseline', years: 2, proficiency: 95 },
+      { name: 'FedRAMP Low, Moderate & High Baselines', years: 2, proficiency: 95 },
       { name: 'FedRAMP Authorization Process', years: 2, proficiency: 90 },
       { name: 'FedRAMP Continuous Monitoring', years: 2, proficiency: 85 },
       { name: 'FedRAMP Shared Responsibility Model', years: 2, proficiency: 90 },
-      { name: 'FISMA Compliance', years: 3, proficiency: 90 },
-      { name: 'FISMA Reporting', years: 3, proficiency: 90 },
-      { name: 'CMMC Level 1', years: 2, proficiency: 85 },
-      { name: 'CMMC Level 2', years: 2, proficiency: 90 },
-      { name: 'DFARS 252.204-7012', years: 2, proficiency: 90 },
-      { name: 'DFARS 252.204-7019 / 7020', years: 2, proficiency: 80 },
+      { name: 'FISMA Compliance & Reporting', years: 3, proficiency: 90 },
+      { name: 'CMMC Level 1 & Level 2', years: 2, proficiency: 90 },
+      { name: 'DFARS 252.204-7012 / 7019 / 7020', years: 2, proficiency: 90 },
       { name: 'DoD IL2 / IL4 / IL5 Compliance', years: 2, proficiency: 85 },
       { name: 'DoD Risk Management Framework', years: 2, proficiency: 85 },
-      { name: 'HIPAA Compliance', years: 2, proficiency: 75 },
-      { name: 'HIPAA Security Rule', years: 2, proficiency: 75 },
-      { name: 'HIPAA Privacy Rule', years: 2, proficiency: 75 },
+      { name: 'HIPAA Compliance (Security & Privacy)', years: 2, proficiency: 75 },
       { name: 'FERPA Compliance', years: 2, proficiency: 80 },
       { name: 'FIPS 199 (Categorization)', years: 3, proficiency: 95 },
       { name: 'FIPS 200 (Minimum Security)', years: 3, proficiency: 90 },
       { name: 'OMB Circular A-130', years: 2, proficiency: 80 },
       { name: 'HHS Enterprise Performance Life Cycle (EPLC)', years: 1, proficiency: 85 },
-      { name: 'ISO 27001', years: 2, proficiency: 75 },
-      { name: 'ISO 27002', years: 2, proficiency: 75 },
+      { name: 'ISO 27001 & ISO 27002', years: 2, proficiency: 75 },
       { name: 'ISO 31000 (Risk Management)', years: 2, proficiency: 70 },
-      { name: 'ISO 27017 (Cloud Security)', years: 2, proficiency: 70 },
-      { name: 'ISO 27018 (Privacy in Cloud)', years: 2, proficiency: 70 },
+      { name: 'ISO 27017 & 27018 (Cloud & Privacy)', years: 2, proficiency: 70 },
       { name: 'COBIT 2019', years: 2, proficiency: 70 },
       { name: 'ITIL Framework', years: 2, proficiency: 70 },
       { name: 'PCI DSS', years: 2, proficiency: 70 },
-      { name: 'SOC 1 / SOC 2 Type I & II', years: 2, proficiency: 75 },
+      { name: 'SOC 1 & SOC 2 (Type I & II)', years: 2, proficiency: 75 },
       { name: 'IT SOX 404 Compliance', years: 2, proficiency: 80 },
-      { name: 'GDPR Awareness', years: 2, proficiency: 65 },
-      { name: 'CCPA Awareness', years: 2, proficiency: 65 },
+      { name: 'GDPR & CCPA Awareness', years: 2, proficiency: 65 },
       { name: 'Risk Management & Assessment', years: 3, proficiency: 90 },
       { name: 'Risk Register Management', years: 3, proficiency: 85 },
       { name: 'Risk-Based Decision Making', years: 3, proficiency: 85 },
-      { name: 'Risk Acceptance Documentation', years: 2, proficiency: 85 },
+      { name: 'Risk Acceptance & Documentation', years: 2, proficiency: 85 },
       { name: 'Risk Appetite & Tolerance', years: 2, proficiency: 80 },
       { name: 'Risk Mitigation Strategy', years: 3, proficiency: 85 },
       { name: 'Compliance Gap Analysis', years: 3, proficiency: 90 },
       { name: 'Control Mapping & Testing', years: 3, proficiency: 90 },
       { name: 'Maturity Assessments', years: 2, proficiency: 85 },
-      { name: 'Regulatory Analysis', years: 3, proficiency: 85 },
-      { name: 'Policy Development', years: 2, proficiency: 80 },
-      { name: 'Policy Review', years: 3, proficiency: 85 },
+      { name: 'Regulatory Analysis & Interpretation', years: 3, proficiency: 85 },
+      { name: 'Policy Development & Review', years: 3, proficiency: 85 },
       { name: 'Standard Operating Procedures (SOPs)', years: 3, proficiency: 85 },
-      { name: 'Compliance Strategy', years: 2, proficiency: 80 },
-      { name: 'Compliance Program Management', years: 2, proficiency: 80 },
-      { name: 'Continuous Monitoring', years: 3, proficiency: 90 },
-      { name: 'Compliance Reporting', years: 3, proficiency: 85 },
-      { name: 'Audit Readiness', years: 3, proficiency: 85 },
-      { name: 'Audit Coordination', years: 2, proficiency: 80 },
+      { name: 'Compliance Strategy & Program Mgmt', years: 2, proficiency: 80 },
+      { name: 'Continuous Monitoring & Reporting', years: 3, proficiency: 90 },
+      { name: 'Audit Readiness & Coordination', years: 3, proficiency: 85 },
       { name: 'Internal Controls Testing', years: 2, proficiency: 80 },
       { name: 'IT General Controls (ITGCs)', years: 2, proficiency: 80 },
       { name: 'Application Controls Testing', years: 2, proficiency: 75 },
-      { name: 'Process Walkthroughs', years: 2, proficiency: 80 },
-      { name: 'Sample Selection', years: 2, proficiency: 75 },
-      { name: 'Test of Design Documentation', years: 2, proficiency: 80 },
+      { name: 'Process Walkthroughs & Evidence Gathering', years: 2, proficiency: 85 },
+      { name: 'Sample Selection & Test of Design', years: 2, proficiency: 80 },
       { name: 'Test of Operating Effectiveness', years: 2, proficiency: 75 },
-      { name: 'Control Evidence Gathering', years: 2, proficiency: 85 },
-      { name: 'Privacy Compliance', years: 2, proficiency: 80 },
-      { name: 'Privacy Threshold Analysis (PTA)', years: 2, proficiency: 90 },
-      { name: 'Privacy Impact Assessment (PIA)', years: 2, proficiency: 90 },
-      { name: 'CUI Protection & Handling', years: 2, proficiency: 90 },
-      { name: 'CUI Boundary Definition', years: 2, proficiency: 85 },
+      { name: 'Privacy Compliance & Impact Assessment', years: 2, proficiency: 85 },
+      { name: 'CUI Protection, Handling & Boundary', years: 2, proficiency: 90 },
       { name: 'CUI Data Flow Mapping', years: 2, proficiency: 85 },
-      { name: 'PII Protection', years: 2, proficiency: 80 },
+      { name: 'PII Protection & Management', years: 2, proficiency: 80 },
       { name: 'Sensitive Data Management', years: 3, proficiency: 85 },
-      { name: 'Data Classification', years: 2, proficiency: 80 },
+      { name: 'Data Classification & Categorization', years: 2, proficiency: 80 },
       { name: 'AI Risk & Governance', years: 2, proficiency: 80 },
-      { name: 'AI Compliance', years: 1, proficiency: 75 },
+      { name: 'AI Compliance & Ethics', years: 1, proficiency: 75 },
       { name: 'Third-Party Risk Awareness', years: 2, proficiency: 70 },
-      { name: 'Vendor Risk Management Awareness', years: 2, proficiency: 70 },
+      { name: 'Vendor Risk Management', years: 2, proficiency: 70 },
       { name: 'Federal Regulatory Compliance', years: 3, proficiency: 90 },
-      { name: 'Federal Acquisition Regulations (FAR)', years: 1, proficiency: 65 },
-      { name: 'Defense Federal Acquisition Regulations (DFAR)', years: 2, proficiency: 80 },
-      { name: 'Government Contracting Awareness', years: 2, proficiency: 75 },
-      { name: 'Compliance Documentation', years: 3, proficiency: 90 },
+      { name: 'Federal Acquisition Regulations (FAR/DFAR)', years: 2, proficiency: 75 },
+      { name: 'Government Contracting Compliance', years: 2, proficiency: 75 },
+      { name: 'Compliance Documentation Excellence', years: 3, proficiency: 90 },
       { name: 'GRC Strategy Development', years: 2, proficiency: 75 },
       { name: 'Information Assurance', years: 3, proficiency: 85 },
+      { name: 'Compliance Workflow Standardization', years: 3, proficiency: 85 },
+      { name: 'Mission Assurance', years: 2, proficiency: 80 },
+      { name: 'Compliance Reporting & Dashboards', years: 3, proficiency: 85 },
     ],
   },
 
@@ -253,26 +221,22 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Authorization to Operate (ATO) Process', years: 2, proficiency: 95 },
       { name: 'ATO Package Development', years: 2, proficiency: 95 },
       { name: 'System Security Plans (SSPs)', years: 2, proficiency: 95 },
-      { name: 'Security Assessment Plans (SAPs)', years: 2, proficiency: 90 },
-      { name: 'Security Assessment Reports (SARs)', years: 2, proficiency: 95 },
+      { name: 'Security Assessment Plans & Reports (SAPs/SARs)', years: 2, proficiency: 95 },
       { name: 'Risk Assessment Reports (RARs)', years: 2, proficiency: 90 },
-      { name: 'Plans of Action and Milestones (POA&Ms)', years: 2, proficiency: 95 },
-      { name: 'POA&M Tracking & Management', years: 2, proficiency: 95 },
+      { name: 'Plans of Action & Milestones (POA&Ms)', years: 2, proficiency: 95 },
+      { name: 'POA&M Tracking & Remediation', years: 2, proficiency: 95 },
       { name: 'Privacy Threshold Analyses (PTAs)', years: 2, proficiency: 90 },
       { name: 'Privacy Impact Assessments (PIAs)', years: 2, proficiency: 90 },
       { name: 'Business Impact Analyses (BIAs)', years: 2, proficiency: 85 },
-      { name: 'Contingency Plans (CPs)', years: 2, proficiency: 80 },
+      { name: 'Contingency & Continuity Plans (CPs)', years: 2, proficiency: 80 },
       { name: 'Incident Response Plans (IRPs)', years: 2, proficiency: 80 },
       { name: 'Configuration Management Plans', years: 2, proficiency: 80 },
-      { name: 'Information System Boundary Definition', years: 2, proficiency: 90 },
-      { name: 'Authorization Boundary Mapping', years: 2, proficiency: 90 },
+      { name: 'System & Authorization Boundary Definition', years: 2, proficiency: 90 },
       { name: 'Security Categorization (FIPS 199)', years: 2, proficiency: 95 },
       { name: 'Impact Level Determination', years: 2, proficiency: 90 },
       { name: 'Control Selection & Tailoring', years: 2, proficiency: 90 },
       { name: 'Control Implementation Statements', years: 2, proficiency: 95 },
-      { name: 'Common Control Identification', years: 2, proficiency: 85 },
-      { name: 'Hybrid Control Documentation', years: 2, proficiency: 85 },
-      { name: 'System-Specific Control Documentation', years: 2, proficiency: 90 },
+      { name: 'Common, Hybrid & System Controls', years: 2, proficiency: 90 },
       { name: 'Compensating Controls Documentation', years: 2, proficiency: 80 },
       { name: 'Security Control Assessment (SCA)', years: 2, proficiency: 90 },
       { name: 'Security Control Testing', years: 2, proficiency: 90 },
@@ -286,19 +250,17 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Security Impact Analysis (SIA)', years: 2, proficiency: 85 },
       { name: 'Reauthorization Process', years: 2, proficiency: 80 },
       { name: 'Annual Security Reviews', years: 2, proficiency: 85 },
-      { name: 'Vulnerability Assessment Coordination', years: 2, proficiency: 80 },
-      { name: 'Penetration Test Coordination', years: 1, proficiency: 70 },
-      { name: 'Findings Documentation', years: 2, proficiency: 90 },
+      { name: 'Vulnerability & Penetration Test Coordination', years: 2, proficiency: 75 },
+      { name: 'Findings Documentation & Tracking', years: 2, proficiency: 90 },
       { name: 'Risk-Based Authorization', years: 2, proficiency: 85 },
       { name: 'Risk Acceptance Documentation', years: 2, proficiency: 85 },
       { name: 'Information System Security Officer (ISSO) Support', years: 2, proficiency: 90 },
       { name: 'Authorizing Official (AO) Support', years: 2, proficiency: 85 },
       { name: 'System Owner Coordination', years: 2, proficiency: 85 },
       { name: 'Independent Assessor Coordination', years: 2, proficiency: 80 },
-      { name: '3PAO (Third-Party Assessment Organization) Coordination', years: 2, proficiency: 85 },
+      { name: '3PAO Coordination & Engagement', years: 2, proficiency: 85 },
       { name: 'C3PAO Preparation (CMMC)', years: 2, proficiency: 80 },
-      { name: 'Mock Assessments', years: 2, proficiency: 80 },
-      { name: 'Self-Assessments', years: 2, proficiency: 85 },
+      { name: 'Mock Assessments & Self-Assessments', years: 2, proficiency: 85 },
       { name: 'Pre-Assessment Activities', years: 2, proficiency: 80 },
       { name: 'Post-Assessment Remediation', years: 2, proficiency: 85 },
       { name: 'Audit Trail Maintenance', years: 2, proficiency: 85 },
@@ -307,6 +269,7 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Multi-Tenancy Authorization', years: 2, proficiency: 75 },
       { name: 'Reciprocity Agreements', years: 2, proficiency: 70 },
       { name: 'Federal Sponsorship Documentation', years: 2, proficiency: 75 },
+      { name: 'Authorization Strategy & Planning', years: 2, proficiency: 85 },
     ],
   },
 
@@ -316,50 +279,36 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Amazon Web Services (AWS)', years: 2, proficiency: 85 },
       { name: 'AWS Solutions Architecture', years: 1, proficiency: 80 },
       { name: 'AWS GovCloud (US)', years: 2, proficiency: 80 },
-      { name: 'AWS IAM (Identity & Access Management)', years: 2, proficiency: 80 },
-      { name: 'AWS S3 Security', years: 2, proficiency: 75 },
-      { name: 'AWS EC2 Security', years: 2, proficiency: 75 },
-      { name: 'AWS Security Hub', years: 2, proficiency: 70 },
-      { name: 'AWS Config', years: 2, proficiency: 70 },
-      { name: 'AWS GuardDuty', years: 2, proficiency: 70 },
-      { name: 'AWS CloudTrail', years: 2, proficiency: 75 },
-      { name: 'AWS CloudWatch', years: 2, proficiency: 70 },
-      { name: 'AWS KMS (Key Management Service)', years: 2, proficiency: 70 },
-      { name: 'AWS WAF (Web Application Firewall)', years: 1, proficiency: 65 },
+      { name: 'AWS IAM & Access Management', years: 2, proficiency: 80 },
+      { name: 'AWS S3 & EC2 Security', years: 2, proficiency: 75 },
+      { name: 'AWS Security Hub & Config', years: 2, proficiency: 70 },
+      { name: 'AWS GuardDuty & CloudTrail', years: 2, proficiency: 75 },
+      { name: 'AWS KMS & Encryption', years: 2, proficiency: 70 },
+      { name: 'AWS WAF & Shield', years: 1, proficiency: 65 },
       { name: 'AWS VPC Security', years: 2, proficiency: 70 },
-      { name: 'AWS Shield', years: 1, proficiency: 65 },
-      { name: 'AWS Artifact', years: 2, proficiency: 75 },
+      { name: 'AWS Artifact & Compliance', years: 2, proficiency: 75 },
       { name: 'AWS FedRAMP Authorization', years: 2, proficiency: 80 },
       { name: 'Microsoft Azure', years: 2, proficiency: 85 },
       { name: 'Azure Administrator (AZ-104)', years: 1, proficiency: 80 },
       { name: 'Azure Government', years: 2, proficiency: 75 },
-      { name: 'Azure Active Directory', years: 2, proficiency: 75 },
-      { name: 'Azure Security Center', years: 2, proficiency: 75 },
+      { name: 'Azure Active Directory & Entra ID', years: 2, proficiency: 75 },
+      { name: 'Azure Security Center & Defender', years: 2, proficiency: 75 },
       { name: 'Azure Sentinel (SIEM)', years: 2, proficiency: 70 },
-      { name: 'Azure Defender', years: 2, proficiency: 70 },
-      { name: 'Azure Policy', years: 2, proficiency: 70 },
-      { name: 'Azure Key Vault', years: 2, proficiency: 70 },
-      { name: 'Azure Monitor', years: 2, proficiency: 70 },
-      { name: 'Azure Compliance Manager', years: 2, proficiency: 70 },
+      { name: 'Azure Policy & Compliance Manager', years: 2, proficiency: 70 },
+      { name: 'Azure Key Vault & Monitor', years: 2, proficiency: 70 },
       { name: 'Azure FedRAMP Authorization', years: 2, proficiency: 75 },
       { name: 'Google Cloud Platform (GCP)', years: 2, proficiency: 70 },
-      { name: 'GCP Security Command Center', years: 2, proficiency: 65 },
-      { name: 'GCP IAM', years: 2, proficiency: 65 },
-      { name: 'GCP Cloud Logging', years: 2, proficiency: 65 },
+      { name: 'GCP Security Command Center & IAM', years: 2, proficiency: 65 },
       { name: 'GCP FedRAMP Authorization', years: 2, proficiency: 70 },
-      { name: 'Multi-Cloud Architecture', years: 2, proficiency: 80 },
+      { name: 'Multi-Cloud Architecture & Strategy', years: 2, proficiency: 80 },
       { name: 'Multi-Cloud Compliance', years: 2, proficiency: 85 },
       { name: 'Multi-Cloud Control Inheritance', years: 2, proficiency: 85 },
       { name: 'Cloud Service Provider (CSP) Assessment', years: 2, proficiency: 85 },
-      { name: 'Cloud Customer Responsibility', years: 2, proficiency: 85 },
       { name: 'Shared Responsibility Model', years: 2, proficiency: 90 },
-      { name: 'SaaS Security', years: 2, proficiency: 80 },
-      { name: 'PaaS Security', years: 2, proficiency: 75 },
-      { name: 'IaaS Security', years: 2, proficiency: 75 },
+      { name: 'SaaS, PaaS & IaaS Security', years: 2, proficiency: 80 },
       { name: 'Hybrid Cloud Security', years: 2, proficiency: 75 },
       { name: 'Cloud Identity & Access Management', years: 2, proficiency: 80 },
-      { name: 'Cloud Data Protection', years: 2, proficiency: 75 },
-      { name: 'Cloud Encryption (At-Rest, In-Transit)', years: 2, proficiency: 75 },
+      { name: 'Cloud Data Protection & Encryption', years: 2, proficiency: 75 },
       { name: 'Cloud Network Security', years: 2, proficiency: 75 },
       { name: 'Cloud Configuration Management', years: 2, proficiency: 75 },
       { name: 'Cloud Vulnerability Management', years: 2, proficiency: 75 },
@@ -371,12 +320,7 @@ const SKILLS_DATA: Record<string, CategoryData> = {
       { name: 'Cloud Security Alliance (CSA) CCM', years: 2, proficiency: 70 },
       { name: 'Cloud Security Architecture', years: 2, proficiency: 75 },
       { name: 'Zero Trust Architecture (ZTA)', years: 2, proficiency: 80 },
-      { name: 'NIST SP 800-207 (Zero Trust)', years: 2, proficiency: 80 },
       { name: 'DevSecOps in Cloud', years: 1, proficiency: 65 },
-      { name: 'Cloud Migration Security', years: 1, proficiency: 65 },
-      { name: 'Cloud Cost Optimization Awareness', years: 1, proficiency: 60 },
-      { name: 'Container Security Basics', years: 1, proficiency: 60 },
-      { name: 'Serverless Security Awareness', years: 1, proficiency: 60 },
     ],
   },
 
@@ -384,79 +328,49 @@ const SKILLS_DATA: Record<string, CategoryData> = {
     id: 'tools', label: 'TOOLS', fullLabel: 'TOOLS & PLATFORMS', icon: '◆',
     skills: [
       { name: 'RegScale (GRC Platform)', years: 1, proficiency: 85 },
-      { name: 'JCAM (Joint Cybersecurity Assessment & Management)', years: 1, proficiency: 90 },
-      { name: 'ServiceNow GRC', years: 1, proficiency: 65 },
-      { name: 'RSA Archer', years: 1, proficiency: 60 },
-      { name: 'OneTrust', years: 1, proficiency: 60 },
-      { name: 'Microsoft Excel (Advanced)', years: 5, proficiency: 95 },
-      { name: 'Microsoft Excel VBA', years: 3, proficiency: 90 },
-      { name: 'Microsoft Word', years: 5, proficiency: 95 },
-      { name: 'Microsoft PowerPoint', years: 5, proficiency: 90 },
-      { name: 'Microsoft Outlook', years: 5, proficiency: 95 },
-      { name: 'Microsoft Teams', years: 4, proficiency: 90 },
+      { name: 'JCAM (Joint Cybersecurity A&M)', years: 1, proficiency: 90 },
+      { name: 'ServiceNow GRC', years: 1, proficiency: 70 },
+      { name: 'RSA Archer', years: 1, proficiency: 65 },
+      { name: 'OneTrust', years: 1, proficiency: 65 },
+      { name: 'Microsoft Excel (Advanced + VBA)', years: 5, proficiency: 95 },
+      { name: 'Microsoft Word & PowerPoint', years: 5, proficiency: 95 },
+      { name: 'Microsoft Outlook & Teams', years: 5, proficiency: 95 },
       { name: 'Microsoft SharePoint', years: 3, proficiency: 80 },
       { name: 'Microsoft OneNote', years: 4, proficiency: 85 },
       { name: 'Microsoft Visio', years: 3, proficiency: 80 },
       { name: 'Microsoft Project', years: 2, proficiency: 70 },
-      { name: 'Google Workspace (Docs, Sheets, Slides)', years: 5, proficiency: 90 },
+      { name: 'Google Workspace', years: 5, proficiency: 90 },
       { name: 'Adobe Acrobat Pro', years: 4, proficiency: 85 },
       { name: 'Notion', years: 2, proficiency: 80 },
       { name: 'Slack', years: 4, proficiency: 85 },
-      { name: 'Zoom', years: 5, proficiency: 95 },
-      { name: 'Webex', years: 3, proficiency: 80 },
-      { name: 'Jira', years: 2, proficiency: 75 },
-      { name: 'Confluence', years: 2, proficiency: 75 },
-      { name: 'Asana', years: 2, proficiency: 75 },
-      { name: 'Trello', years: 3, proficiency: 80 },
-      { name: 'Monday.com', years: 1, proficiency: 65 },
-      { name: 'Smartsheet', years: 1, proficiency: 65 },
+      { name: 'Zoom & Webex', years: 5, proficiency: 95 },
+      { name: 'Jira & Confluence', years: 2, proficiency: 75 },
+      { name: 'Asana & Trello', years: 3, proficiency: 80 },
       { name: 'Splunk', years: 2, proficiency: 70 },
       { name: 'Microsoft Sentinel', years: 2, proficiency: 70 },
-      { name: 'Wazuh', years: 1, proficiency: 65 },
-      { name: 'Elastic Stack (ELK)', years: 1, proficiency: 60 },
-      { name: 'Nessus / Tenable', years: 2, proficiency: 75 },
-      { name: 'Qualys', years: 1, proficiency: 65 },
-      { name: 'OpenVAS', years: 2, proficiency: 65 },
+      { name: 'Wazuh & Elastic Stack (ELK)', years: 1, proficiency: 65 },
+      { name: 'Nessus & Tenable', years: 2, proficiency: 75 },
+      { name: 'Qualys & OpenVAS', years: 2, proficiency: 65 },
       { name: 'Wireshark', years: 3, proficiency: 80 },
       { name: 'Nmap', years: 3, proficiency: 80 },
-      { name: 'Metasploit', years: 2, proficiency: 65 },
+      { name: 'Metasploit Framework', years: 2, proficiency: 65 },
       { name: 'Burp Suite', years: 2, proficiency: 70 },
       { name: 'Kali Linux', years: 3, proficiency: 80 },
-      { name: 'John the Ripper', years: 2, proficiency: 65 },
-      { name: 'Hydra', years: 2, proficiency: 65 },
-      { name: 'Aircrack-ng', years: 2, proficiency: 60 },
       { name: 'Sleuth Kit', years: 2, proficiency: 75 },
       { name: 'Volatility', years: 2, proficiency: 70 },
-      { name: 'HxD (Hex Editor)', years: 2, proficiency: 80 },
-      { name: 'Bless (Hex Editor)', years: 2, proficiency: 75 },
+      { name: 'HxD & Bless (Hex Editors)', years: 2, proficiency: 80 },
       { name: 'RegRipper', years: 2, proficiency: 70 },
-      { name: 'FTK Imager', years: 1, proficiency: 65 },
-      { name: 'Autopsy', years: 1, proficiency: 60 },
+      { name: 'FTK Imager & Autopsy', years: 1, proficiency: 65 },
       { name: 'Virginia Cyber Range Platform', years: 2, proficiency: 90 },
-      { name: 'VMware Workstation', years: 2, proficiency: 75 },
-      { name: 'VirtualBox', years: 3, proficiency: 80 },
-      { name: 'Docker (Basics)', years: 1, proficiency: 60 },
+      { name: 'VMware & VirtualBox', years: 2, proficiency: 75 },
       { name: 'Visual Studio Code', years: 4, proficiency: 85 },
-      { name: 'PyCharm', years: 2, proficiency: 75 },
-      { name: 'RStudio', years: 2, proficiency: 70 },
-      { name: 'MATLAB', years: 2, proficiency: 65 },
-      { name: 'Git / GitHub', years: 3, proficiency: 75 },
-      { name: 'Tableau', years: 2, proficiency: 65 },
-      { name: 'Power BI', years: 2, proficiency: 65 },
-      { name: 'SQLite', years: 3, proficiency: 80 },
-      { name: 'MySQL', years: 2, proficiency: 70 },
-      { name: 'PostgreSQL', years: 1, proficiency: 60 },
+      { name: 'PyCharm & RStudio', years: 2, proficiency: 75 },
+      { name: 'Git & GitHub', years: 3, proficiency: 75 },
+      { name: 'SQLite & MySQL', years: 3, proficiency: 80 },
+      { name: 'Tableau & Power BI', years: 2, proficiency: 65 },
       { name: 'SAM.gov', years: 1, proficiency: 80 },
-      { name: 'USAJOBS', years: 1, proficiency: 75 },
-      { name: 'HHS Learning Management System', years: 1, proficiency: 80 },
-      { name: 'NIH Login', years: 1, proficiency: 90 },
-      { name: 'LinkedIn Sales Navigator', years: 1, proficiency: 70 },
-      { name: 'HubSpot CRM', years: 1, proficiency: 60 },
-      { name: 'Salesforce (Awareness)', years: 1, proficiency: 55 },
-      { name: 'Mailchimp', years: 1, proficiency: 65 },
+      { name: 'LinkedIn (Professional)', years: 5, proficiency: 90 },
       { name: 'Canva', years: 3, proficiency: 80 },
-      { name: 'Adobe Photoshop (Basics)', years: 2, proficiency: 60 },
-      { name: 'Figma (Basics)', years: 1, proficiency: 60 },
       { name: 'WordPress', years: 2, proficiency: 70 },
     ],
   },
@@ -464,226 +378,112 @@ const SKILLS_DATA: Record<string, CategoryData> = {
   soft: {
     id: 'soft', label: 'SOFT', fullLabel: 'SOFT SKILLS', icon: '✦',
     skills: [
-      { name: 'Verbal Communication', years: 5, proficiency: 90 },
-      { name: 'Written Communication', years: 5, proficiency: 95 },
+      { name: 'Verbal & Written Communication', years: 5, proficiency: 95 },
       { name: 'Active Listening', years: 5, proficiency: 90 },
-      { name: 'Public Speaking', years: 4, proficiency: 80 },
-      { name: 'Presentation Skills', years: 4, proficiency: 85 },
+      { name: 'Public Speaking & Presentation', years: 4, proficiency: 85 },
       { name: 'Cross-Cultural Communication', years: 4, proficiency: 85 },
       { name: 'Multilingual Communication', years: 5, proficiency: 90 },
-      { name: 'Empathy', years: 5, proficiency: 90 },
-      { name: 'Emotional Intelligence', years: 5, proficiency: 85 },
-      { name: 'Adaptability', years: 5, proficiency: 95 },
-      { name: 'Resilience', years: 5, proficiency: 90 },
-      { name: 'Patience', years: 5, proficiency: 90 },
+      { name: 'Empathy & Emotional Intelligence', years: 5, proficiency: 90 },
+      { name: 'Adaptability & Resilience', years: 5, proficiency: 95 },
       { name: 'Open-Mindedness', years: 5, proficiency: 90 },
-      { name: 'Curiosity', years: 5, proficiency: 95 },
-      { name: 'Creativity', years: 4, proficiency: 85 },
-      { name: 'Critical Thinking', years: 5, proficiency: 90 },
-      { name: 'Analytical Thinking', years: 5, proficiency: 90 },
+      { name: 'Curiosity & Continuous Learning', years: 5, proficiency: 95 },
+      { name: 'Creativity & Innovation', years: 4, proficiency: 85 },
+      { name: 'Critical & Analytical Thinking', years: 5, proficiency: 90 },
       { name: 'Problem Solving', years: 5, proficiency: 90 },
       { name: 'Decision Making', years: 4, proficiency: 85 },
       { name: 'Strategic Thinking', years: 4, proficiency: 85 },
-      { name: 'Time Management', years: 5, proficiency: 90 },
+      { name: 'Time Management & Prioritization', years: 5, proficiency: 90 },
       { name: 'Multitasking', years: 5, proficiency: 90 },
-      { name: 'Prioritization', years: 5, proficiency: 90 },
-      { name: 'Detail-Oriented', years: 5, proficiency: 95 },
-      { name: 'Organization', years: 5, proficiency: 95 },
-      { name: 'Self-Motivated', years: 5, proficiency: 95 },
-      { name: 'Self-Discipline', years: 5, proficiency: 90 },
-      { name: 'Accountability', years: 5, proficiency: 95 },
-      { name: 'Integrity', years: 5, proficiency: 95 },
-      { name: 'Reliability', years: 5, proficiency: 95 },
-      { name: 'Trustworthiness', years: 5, proficiency: 95 },
-      { name: 'Work Ethic', years: 5, proficiency: 95 },
-      { name: 'Initiative', years: 5, proficiency: 90 },
-      { name: 'Proactivity', years: 5, proficiency: 90 },
-      { name: 'Continuous Learning', years: 5, proficiency: 95 },
+      { name: 'Detail-Oriented & Organized', years: 5, proficiency: 95 },
+      { name: 'Self-Motivated & Self-Disciplined', years: 5, proficiency: 95 },
+      { name: 'Accountability & Integrity', years: 5, proficiency: 95 },
+      { name: 'Reliability & Trustworthiness', years: 5, proficiency: 95 },
+      { name: 'Strong Work Ethic', years: 5, proficiency: 95 },
+      { name: 'Initiative & Proactivity', years: 5, proficiency: 90 },
       { name: 'Growth Mindset', years: 5, proficiency: 95 },
-      { name: 'Coachability', years: 5, proficiency: 90 },
-      { name: 'Receptive to Feedback', years: 5, proficiency: 90 },
+      { name: 'Coachability & Feedback Receptive', years: 5, proficiency: 90 },
       { name: 'Conflict Resolution', years: 4, proficiency: 80 },
-      { name: 'Negotiation', years: 4, proficiency: 80 },
-      { name: 'Persuasion', years: 4, proficiency: 80 },
-      { name: 'Influence', years: 4, proficiency: 80 },
-      { name: 'Diplomacy', years: 4, proficiency: 80 },
-      { name: 'Customer Service', years: 5, proficiency: 90 },
+      { name: 'Negotiation & Persuasion', years: 4, proficiency: 80 },
+      { name: 'Diplomacy & Influence', years: 4, proficiency: 80 },
+      { name: 'Customer Service Excellence', years: 5, proficiency: 90 },
       { name: 'Client Relationship Management', years: 4, proficiency: 85 },
       { name: 'Stakeholder Engagement', years: 4, proficiency: 85 },
-      { name: 'Networking', years: 5, proficiency: 90 },
-      { name: 'Relationship Building', years: 5, proficiency: 90 },
-      { name: 'Teamwork', years: 5, proficiency: 95 },
-      { name: 'Collaboration', years: 5, proficiency: 95 },
+      { name: 'Networking & Relationship Building', years: 5, proficiency: 90 },
+      { name: 'Teamwork & Collaboration', years: 5, proficiency: 95 },
       { name: 'Cross-Functional Collaboration', years: 4, proficiency: 90 },
-      { name: 'Leadership', years: 4, proficiency: 85 },
-      { name: 'Mentorship', years: 3, proficiency: 75 },
-      { name: 'Coaching', years: 3, proficiency: 75 },
-      { name: 'Delegation', years: 3, proficiency: 75 },
-      { name: 'Team Building', years: 4, proficiency: 80 },
-      { name: 'Motivating Others', years: 4, proficiency: 80 },
-      { name: 'Inspiring Confidence', years: 4, proficiency: 80 },
-      { name: 'Constructive Feedback', years: 4, proficiency: 80 },
-      { name: 'Active Engagement', years: 5, proficiency: 90 },
+      { name: 'Leadership & Mentorship', years: 4, proficiency: 85 },
       { name: 'Cultural Awareness', years: 5, proficiency: 90 },
-      { name: 'Diversity & Inclusion Mindset', years: 5, proficiency: 90 },
       { name: 'Professionalism', years: 5, proficiency: 95 },
       { name: 'Composure Under Pressure', years: 5, proficiency: 90 },
       { name: 'Stress Management', years: 5, proficiency: 90 },
-      { name: 'Work-Life Balance', years: 4, proficiency: 80 },
       { name: 'Time Pressure Performance', years: 5, proficiency: 90 },
-      { name: 'Crisis Management', years: 3, proficiency: 75 },
-      { name: 'Calm Under Fire', years: 4, proficiency: 85 },
-      { name: 'Decision Under Uncertainty', years: 4, proficiency: 80 },
-      { name: 'Risk Tolerance', years: 4, proficiency: 80 },
       { name: 'Ambiguity Tolerance', years: 4, proficiency: 85 },
-      { name: 'Innovation Mindset', years: 4, proficiency: 85 },
       { name: 'Entrepreneurial Mindset', years: 5, proficiency: 90 },
       { name: 'Business Acumen', years: 4, proficiency: 80 },
-      { name: 'Commercial Awareness', years: 4, proficiency: 75 },
-      { name: 'Industry Awareness', years: 4, proficiency: 85 },
-      { name: 'Adaptability to Change', years: 5, proficiency: 90 },
-      { name: 'Goal-Oriented', years: 5, proficiency: 90 },
-      { name: 'Results-Driven', years: 5, proficiency: 95 },
-      { name: 'Performance-Focused', years: 5, proficiency: 90 },
+      { name: 'Industry & Commercial Awareness', years: 4, proficiency: 80 },
+      { name: 'Goal-Oriented & Results-Driven', years: 5, proficiency: 95 },
       { name: 'Quality-Focused', years: 5, proficiency: 95 },
-      { name: 'Process-Oriented', years: 5, proficiency: 90 },
-      { name: 'Standards-Driven', years: 5, proficiency: 90 },
-      { name: 'Ethics-Driven', years: 5, proficiency: 95 },
-      { name: 'Compliance Mindset', years: 4, proficiency: 90 },
-      { name: 'Risk-Aware', years: 4, proficiency: 90 },
-      { name: 'Solution-Oriented', years: 5, proficiency: 90 },
-      { name: 'Outcome-Focused', years: 5, proficiency: 90 },
-      { name: 'Service-Oriented', years: 5, proficiency: 90 },
-      { name: 'Mission-Driven', years: 4, proficiency: 90 },
-      { name: 'Purpose-Driven', years: 5, proficiency: 90 },
-      { name: 'Values-Aligned', years: 5, proficiency: 95 },
-      { name: 'Future-Focused', years: 5, proficiency: 90 },
-      { name: 'Big Picture Thinking', years: 4, proficiency: 85 },
+      { name: 'Process-Oriented & Standards-Driven', years: 5, proficiency: 90 },
+      { name: 'Ethics-Driven & Compliance Mindset', years: 5, proficiency: 95 },
+      { name: 'Risk-Aware & Solution-Oriented', years: 5, proficiency: 90 },
+      { name: 'Mission & Purpose-Driven', years: 5, proficiency: 90 },
+      { name: 'Big Picture & Future-Focused Thinking', years: 5, proficiency: 90 },
     ],
   },
 
   professional: {
     id: 'professional', label: 'PROFESSIONAL', fullLabel: 'PROFESSIONAL COMPETENCIES', icon: '◇',
     skills: [
-      { name: 'Project Management', years: 4, proficiency: 85 },
-      { name: 'Program Management', years: 2, proficiency: 75 },
-      { name: 'Project Planning', years: 4, proficiency: 85 },
-      { name: 'Project Execution', years: 4, proficiency: 85 },
-      { name: 'Project Closeout', years: 3, proficiency: 80 },
-      { name: 'Milestone Management', years: 4, proficiency: 85 },
-      { name: 'Deliverable Management', years: 4, proficiency: 85 },
+      { name: 'Project & Program Management', years: 4, proficiency: 85 },
+      { name: 'Project Planning & Execution', years: 4, proficiency: 85 },
+      { name: 'Milestone & Deliverable Management', years: 4, proficiency: 85 },
       { name: 'Resource Coordination', years: 4, proficiency: 80 },
-      { name: 'Risk Tracking', years: 3, proficiency: 85 },
-      { name: 'Issue Management', years: 3, proficiency: 80 },
+      { name: 'Risk Tracking & Issue Management', years: 3, proficiency: 85 },
       { name: 'Change Management', years: 3, proficiency: 80 },
       { name: 'RACI Modeling', years: 2, proficiency: 80 },
-      { name: 'Stakeholder Mapping', years: 3, proficiency: 80 },
-      { name: 'Stakeholder Communication', years: 4, proficiency: 85 },
-      { name: 'Executive Communication', years: 3, proficiency: 80 },
-      { name: 'Executive Briefings', years: 2, proficiency: 75 },
+      { name: 'Stakeholder Mapping & Communication', years: 4, proficiency: 85 },
+      { name: 'Executive Communication & Briefings', years: 3, proficiency: 80 },
       { name: 'Cross-Functional Leadership', years: 3, proficiency: 80 },
-      { name: 'Cross-Functional Coordination', years: 4, proficiency: 85 },
-      { name: 'Team Leadership', years: 3, proficiency: 75 },
-      { name: 'Strategic Planning', years: 3, proficiency: 75 },
-      { name: 'Strategic Advisory', years: 2, proficiency: 75 },
-      { name: 'Strategic Decision Making', years: 3, proficiency: 75 },
+      { name: 'Strategic Planning & Advisory', years: 3, proficiency: 75 },
       { name: 'Business Development', years: 3, proficiency: 75 },
       { name: 'Federal Capture Strategy', years: 2, proficiency: 75 },
-      { name: 'Federal Capture Management', years: 2, proficiency: 75 },
-      { name: 'Proposal Management', years: 2, proficiency: 75 },
-      { name: 'Proposal Coordination', years: 2, proficiency: 80 },
-      { name: 'Proposal Development', years: 2, proficiency: 75 },
-      { name: 'RFP Response', years: 2, proficiency: 80 },
-      { name: 'RFI Response', years: 2, proficiency: 80 },
+      { name: 'Proposal Management & Coordination', years: 2, proficiency: 80 },
+      { name: 'RFP & RFI Response', years: 2, proficiency: 80 },
       { name: 'Compliance Matrix Development', years: 2, proficiency: 85 },
       { name: 'Past Performance Documentation', years: 2, proficiency: 80 },
-      { name: 'Client Acquisition', years: 2, proficiency: 70 },
-      { name: 'Client Engagement', years: 3, proficiency: 80 },
-      { name: 'Client Advisory', years: 2, proficiency: 75 },
-      { name: 'Consulting', years: 3, proficiency: 80 },
+      { name: 'Client Engagement & Advisory', years: 3, proficiency: 80 },
       { name: 'Cybersecurity Consulting', years: 2, proficiency: 80 },
-      { name: 'Risk Advisory', years: 2, proficiency: 80 },
-      { name: 'Regulatory Advisory', years: 2, proficiency: 75 },
+      { name: 'Risk Advisory & Regulatory Advisory', years: 2, proficiency: 80 },
       { name: 'Technical Writing', years: 4, proficiency: 90 },
       { name: 'Documentation Excellence', years: 4, proficiency: 90 },
-      { name: 'Policy Writing', years: 3, proficiency: 80 },
-      { name: 'Procedure Writing', years: 3, proficiency: 85 },
-      { name: 'Standard Operating Procedures (SOPs)', years: 3, proficiency: 85 },
+      { name: 'Policy & Procedure Writing', years: 3, proficiency: 85 },
       { name: 'Process Documentation', years: 4, proficiency: 90 },
-      { name: 'Training Materials Development', years: 2, proficiency: 75 },
-      { name: 'Knowledge Transfer', years: 3, proficiency: 80 },
-      { name: 'Training Delivery', years: 2, proficiency: 75 },
-      { name: 'Workshop Facilitation', years: 2, proficiency: 70 },
-      { name: 'Mentorship', years: 3, proficiency: 75 },
-      { name: 'Process Automation', years: 3, proficiency: 85 },
-      { name: 'Workflow Standardization', years: 3, proficiency: 85 },
-      { name: 'Workflow Design', years: 3, proficiency: 80 },
+      { name: 'Training & Knowledge Transfer', years: 3, proficiency: 80 },
+      { name: 'Workshop Facilitation', years: 2, proficiency: 75 },
+      { name: 'Mentorship & Coaching', years: 3, proficiency: 75 },
+      { name: 'Process Automation & Workflow Design', years: 3, proficiency: 85 },
       { name: 'Process Improvement', years: 3, proficiency: 80 },
       { name: 'Operational Excellence', years: 3, proficiency: 80 },
-      { name: 'Business Process Reengineering', years: 2, proficiency: 70 },
       { name: 'Continuous Improvement', years: 3, proficiency: 80 },
-      { name: 'Quality Assurance', years: 4, proficiency: 85 },
-      { name: 'Quality Control', years: 4, proficiency: 85 },
-      { name: 'Audit Readiness', years: 3, proficiency: 85 },
-      { name: 'Audit Coordination', years: 2, proficiency: 80 },
-      { name: 'Audit Support', years: 2, proficiency: 80 },
-      { name: 'Internal Audit Coordination', years: 2, proficiency: 80 },
-      { name: 'External Audit Coordination', years: 2, proficiency: 75 },
-      { name: 'Compliance Reporting', years: 3, proficiency: 85 },
-      { name: 'KPI Development', years: 2, proficiency: 75 },
-      { name: 'Metrics & Reporting', years: 3, proficiency: 80 },
-      { name: 'Dashboard Development', years: 2, proficiency: 75 },
+      { name: 'Quality Assurance & Control', years: 4, proficiency: 85 },
+      { name: 'Audit Readiness & Support', years: 3, proficiency: 85 },
+      { name: 'Internal & External Audit Coordination', years: 2, proficiency: 80 },
+      { name: 'Compliance Reporting & Metrics', years: 3, proficiency: 85 },
+      { name: 'Dashboard & KPI Development', years: 2, proficiency: 75 },
       { name: 'Performance Tracking', years: 3, proficiency: 80 },
-      { name: 'Vendor Management Awareness', years: 2, proficiency: 70 },
-      { name: 'Contract Management Awareness', years: 2, proficiency: 70 },
-      { name: 'Service Level Agreements (SLAs)', years: 2, proficiency: 75 },
-      { name: 'Negotiation Skills', years: 3, proficiency: 75 },
-      { name: 'Decision Analysis', years: 3, proficiency: 80 },
-      { name: 'Data-Driven Decision Making', years: 3, proficiency: 80 },
-      { name: 'Cost-Benefit Analysis', years: 2, proficiency: 70 },
-      { name: 'ROI Analysis Awareness', years: 2, proficiency: 65 },
-      { name: 'Budget Management Awareness', years: 1, proficiency: 60 },
-      { name: 'Resource Planning', years: 2, proficiency: 75 },
-      { name: 'Capacity Planning', years: 2, proficiency: 70 },
-      { name: 'Marketing Strategy', years: 2, proficiency: 70 },
-      { name: 'Content Marketing', years: 2, proficiency: 75 },
-      { name: 'SEO Optimization', years: 2, proficiency: 70 },
-      { name: 'Brand Management', years: 2, proficiency: 70 },
-      { name: 'Digital Marketing', years: 2, proficiency: 70 },
-      { name: 'Social Media Strategy', years: 3, proficiency: 75 },
-      { name: 'LinkedIn Personal Branding', years: 4, proficiency: 85 },
+      { name: 'Decision Analysis & Data-Driven Decisions', years: 3, proficiency: 80 },
+      { name: 'Cost-Benefit & ROI Analysis', years: 2, proficiency: 70 },
+      { name: 'Resource & Capacity Planning', years: 2, proficiency: 75 },
+      { name: 'Marketing Strategy & Content', years: 2, proficiency: 75 },
+      { name: 'SEO & Digital Marketing', years: 2, proficiency: 70 },
       { name: 'Thought Leadership Content', years: 2, proficiency: 75 },
-      { name: 'Blog Writing', years: 3, proficiency: 80 },
-      { name: 'Case Study Development', years: 2, proficiency: 75 },
-      { name: 'Whitepaper Development', years: 1, proficiency: 65 },
-      { name: 'Market Research', years: 3, proficiency: 80 },
-      { name: 'Competitive Analysis', years: 3, proficiency: 80 },
-      { name: 'Industry Analysis', years: 3, proficiency: 80 },
-      { name: 'Market Intelligence', years: 2, proficiency: 75 },
+      { name: 'Market & Competitive Analysis', years: 3, proficiency: 80 },
       { name: 'Pipeline Management', years: 2, proficiency: 70 },
-      { name: 'Pipeline Development', years: 2, proficiency: 70 },
       { name: 'Go/No-Go Decision Support', years: 2, proficiency: 75 },
-      { name: 'Win/Loss Analysis', years: 1, proficiency: 65 },
-      { name: 'Entrepreneurship', years: 5, proficiency: 85 },
-      { name: 'Startup Operations', years: 3, proficiency: 80 },
-      { name: 'Co-Founder Experience', years: 3, proficiency: 85 },
-      { name: 'Business Operations', years: 3, proficiency: 75 },
-      { name: 'Strategic Partnerships', years: 2, proficiency: 70 },
-      { name: 'Innovation', years: 3, proficiency: 80 },
-      { name: 'Research & Analysis', years: 5, proficiency: 90 },
-      { name: 'Scientific Research', years: 1, proficiency: 75 },
-      { name: 'Literature Review', years: 2, proficiency: 85 },
-      { name: 'Peer-Reviewed Publication', years: 1, proficiency: 80 },
-      { name: 'Academic Writing', years: 2, proficiency: 80 },
-      { name: 'Public Sector Engagement', years: 2, proficiency: 80 },
-      { name: 'Federal Stakeholder Engagement', years: 2, proficiency: 80 },
-      { name: 'Government Contracting Awareness', years: 2, proficiency: 75 },
-      { name: 'Educational Background (BIT-Cyber)', years: 4, proficiency: 95 },
-      { name: 'Cybersecurity Education & Training', years: 4, proficiency: 90 },
-      { name: 'CTF Competition Experience', years: 2, proficiency: 80 },
-      { name: 'Cybersecurity Club Leadership', years: 2, proficiency: 75 },
-      { name: 'Industry Networking', years: 4, proficiency: 85 },
-      { name: 'Conference Attendance', years: 3, proficiency: 80 },
+      { name: 'Entrepreneurship & Startup Operations', years: 5, proficiency: 85 },
+      { name: 'Research & Literature Review', years: 2, proficiency: 85 },
+      { name: 'Academic & Scientific Writing', years: 2, proficiency: 80 },
+      { name: 'CTF Competition & Club Leadership', years: 2, proficiency: 80 },
     ],
   },
 }
@@ -713,7 +513,7 @@ const STYLES = `
   /* ── Animations ──────────────────────────────────────────── */
   @keyframes marqueeSlide {
     from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
+    to   { transform: translateX(calc(-1 * var(--track-translate, 50%))); }
   }
   @keyframes cardShine {
     0%   { transform: translateX(-100%); }
@@ -742,6 +542,7 @@ const STYLES = `
     transition: opacity 200ms ease, filter 200ms ease,
                 transform 200ms ease, box-shadow 200ms ease,
                 border-color 200ms ease;
+    contain: layout style;
   }
   /* Active match — bright, pops out */
   .sk-card-active-match {
@@ -785,7 +586,8 @@ const STYLES = `
     background: linear-gradient(115deg, transparent 30%,
       rgba(255,255,255,0.18) 50%, transparent 70%);
     pointer-events: none; z-index: 10;
-    animation: cardShine 3s linear infinite;
+    animation: cardShine 8s linear infinite;
+    transform: translateZ(0);
   }
 
   /* ── Proficiency bar ─────────────────────────────────────── */
@@ -962,27 +764,37 @@ const STYLES = `
    SkillCard
 ───────────────────────────────────────────────────────────── */
 
-function SkillCard({
-  skill, icon, categoryShort, shineDelay, isActiveMatch, isOtherMatch, isDimmed, cardRefCallback,
+const SkillCard = memo(function SkillCard({
+  skill, icon, categoryShort, shineDelay, isActiveMatch, isOtherMatch, isDimmed,
+  cardKey, isOrig, onCardRef,
 }: {
-  skill:            Skill
-  icon:             string
-  categoryShort:    string
-  shineDelay:       number
-  isActiveMatch:    boolean
-  isOtherMatch:     boolean
-  isDimmed:         boolean
-  cardRefCallback?: (el: HTMLDivElement | null) => void
+  skill:         Skill
+  icon:          string
+  categoryShort: string
+  shineDelay:    number
+  isActiveMatch: boolean
+  isOtherMatch:  boolean
+  isDimmed:      boolean
+  cardKey:       string
+  isOrig:        boolean
+  onCardRef:     (cardKey: string, el: HTMLDivElement | null) => void
 }) {
+  // Stable ref callback — only original cards register into the parent map.
+  // Stability lets React.memo skip re-rendering unaffected cards during search.
+  const setCardRef = useCallback((el: HTMLDivElement | null) => {
+    if (isOrig) onCardRef(cardKey, el)
+  }, [isOrig, cardKey, onCardRef])
+
   return (
     <div
-      ref={cardRefCallback}
+      ref={setCardRef}
       className={
         'sk-card' +
         (isActiveMatch ? ' sk-card-active-match' : '') +
         (isOtherMatch  ? ' sk-card-other-match'  : '') +
         (isDimmed      ? ' sk-card-dimmed'        : '')
       }
+      onMouseEnter={() => window.dispatchEvent(new Event('skills:cardEntered'))}
     >
       <div className="sk-corner sk-corner-tl" />
       <div className="sk-corner sk-corner-tr" />
@@ -1003,11 +815,13 @@ function SkillCard({
       </div>
     </div>
   )
-}
+})
 
 /* ─────────────────────────────────────────────────────────────
    MarqueeRow — animation managed externally via onTrackRef
 ───────────────────────────────────────────────────────────── */
+
+const DUPLICATE_COUNT = 18
 
 function MarqueeRow({
   data, reverse, searchOpen, searchQuery, activeCardKey, matchCardKeySet, onTrackRef, onCardRef,
@@ -1018,14 +832,41 @@ function MarqueeRow({
   searchQuery:     string
   activeCardKey:   string | null
   matchCardKeySet: Set<string>
-  onTrackRef:      (el: HTMLDivElement | null) => void
+  onTrackRef:      (id: string, el: HTMLDivElement | null) => void
   onCardRef:       (cardKey: string, el: HTMLDivElement | null) => void
 }) {
-  const doubled  = [...data.skills, ...data.skills]
+  const trackRef = useRef<HTMLDivElement | null>(null)
+  // Full original array + a small duplicate tail (just enough to mask the
+  // wrap-around) instead of a full 2× copy — keeps the DOM ~75% smaller.
+  const doubled  = [...data.skills, ...data.skills.slice(0, DUPLICATE_COUNT)]
   const duration = Math.max(60, data.skills.length * 1.6)
 
+  // Forward the track node to both the local ref and the parent's row map
+  const setTrackRef = useCallback((el: HTMLDivElement | null) => {
+    trackRef.current = el
+    onTrackRef(data.id, el)
+  }, [onTrackRef, data.id])
+
+  // Measure the exact one-period translate distance (N original cards + N gaps)
+  // and expose it to the marquee keyframe via a CSS custom property. Measuring at
+  // runtime keeps the loop seamless across the responsive card-size breakpoint.
+  useLayoutEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    const apply = () => {
+      const firstCard = track.children[0] as HTMLElement | undefined
+      if (!firstCard) return
+      const slot = firstCard.offsetWidth +
+        (parseFloat(window.getComputedStyle(track).gap || '0') || 0)
+      track.style.setProperty('--track-translate', `${data.skills.length * slot}px`)
+    }
+    apply()
+    window.addEventListener('resize', apply)
+    return () => window.removeEventListener('resize', apply)
+  }, [data.skills.length])
+
   return (
-    <div style={{ marginBottom: 48 }}>
+    <div id={data.id} style={{ marginBottom: 48 }}>
       {/* Category header — centered */}
       <h2 style={{
         fontFamily: 'var(--font-space-grotesk)', fontWeight: 700,
@@ -1039,7 +880,7 @@ function MarqueeRow({
       {/* Marquee — full viewport width */}
       <div className={`sk-row${reverse ? ' sk-row-rev' : ''}`}>
         <div
-          ref={onTrackRef}
+          ref={setTrackRef}
           className="sk-track"
           data-dur={`${duration}s`}
           style={{ animationDuration: `${duration}s` }}
@@ -1061,7 +902,9 @@ function MarqueeRow({
                 isActiveMatch={isActiveMatch}
                 isOtherMatch={isOtherMatch}
                 isDimmed={isDimmed}
-                cardRefCallback={isOrig ? (el) => onCardRef(cardKey, el) : undefined}
+                cardKey={cardKey}
+                isOrig={isOrig}
+                onCardRef={onCardRef}
               />
             )
           })}
@@ -1082,6 +925,7 @@ export default function SkillsPage() {
   const [activeFilters, setActiveFilters]         = useState<Set<string>>(new Set(['all']))
   const [searchOpen, setSearchOpen]               = useState(false)
   const [searchQuery, setSearchQuery]             = useState('')
+  const [debouncedQuery, setDebouncedQuery]       = useState('')
   const [allMatches, setAllMatches]               = useState<Match[]>([])
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
 
@@ -1092,15 +936,21 @@ export default function SkillsPage() {
 
   useEffect(() => { setMounted(true) }, [])
 
+  // ── Debounce the search query (80ms) — typing bursts compute matches once ──
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 80)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   // ── Relevance-ranked match computation ───────────────────────
   // Tier 1: exact  Tier 2: starts-with  Tier 3: word-boundary  Tier 4: substring
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!debouncedQuery.trim()) {
       setAllMatches([])
       setCurrentMatchIndex(0)
       return
     }
-    const q = searchQuery.toLowerCase().trim()
+    const q = debouncedQuery.toLowerCase().trim()
     const tier1: Match[] = []
     const tier2: Match[] = []
     const tier3: Match[] = []
@@ -1130,7 +980,7 @@ export default function SkillsPage() {
 
     setAllMatches([...tier1, ...tier2, ...tier3, ...tier4])
     setCurrentMatchIndex(0)
-  }, [searchQuery])
+  }, [debouncedQuery])
 
   // ── Two-axis navigation: vertical scroll + horizontal centering ──
   useEffect(() => {
@@ -1211,6 +1061,16 @@ export default function SkillsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchOpen])
 
+  // ── Stable ref collectors — stability lets SkillCard's React.memo hold ──
+  const handleTrackRef = useCallback((id: string, el: HTMLDivElement | null) => {
+    if (el) rowTrackRefs.current.set(id, el)
+    else    rowTrackRefs.current.delete(id)
+  }, [])
+  const handleCardRef = useCallback((cardKey: string, el: HTMLDivElement | null) => {
+    if (el) cardRefs.current.set(cardKey, el)
+    else    cardRefs.current.delete(cardKey)
+  }, [])
+
   const closeSearch = useCallback(() => {
     rowTrackRefs.current.forEach(track => {
       if (!track) return
@@ -1232,6 +1092,7 @@ export default function SkillsPage() {
     })
     setSearchOpen(false)
     setSearchQuery('')
+    setDebouncedQuery('')
     setAllMatches([])
     setCurrentMatchIndex(0)
   }, [])
@@ -1376,17 +1237,11 @@ export default function SkillsPage() {
               data={data}
               reverse={index % 2 === 1}
               searchOpen={searchOpen}
-              searchQuery={searchQuery}
+              searchQuery={debouncedQuery}
               activeCardKey={activeCardKey}
               matchCardKeySet={matchCardKeySet}
-              onTrackRef={(el) => {
-                if (el) rowTrackRefs.current.set(key, el)
-                else    rowTrackRefs.current.delete(key)
-              }}
-              onCardRef={(cardKey, el) => {
-                if (el) cardRefs.current.set(cardKey, el)
-                else    cardRefs.current.delete(cardKey)
-              }}
+              onTrackRef={handleTrackRef}
+              onCardRef={handleCardRef}
             />
           )
         })}

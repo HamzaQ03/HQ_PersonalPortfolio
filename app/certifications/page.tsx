@@ -263,7 +263,7 @@ export default function CertificationsPage() {
             <div
               style={{ position: 'relative', cursor: 'pointer' }}
               onClick={() => setModal({ kind: 'clearance' })}
-              onMouseEnter={() => setHoveredCard('clearance')}
+              onMouseEnter={() => { setHoveredCard('clearance'); window.dispatchEvent(new Event('certifications:cardEntered')) }}
               onMouseLeave={() => setHoveredCard(null)}
             >
               <span style={{
@@ -305,7 +305,7 @@ export default function CertificationsPage() {
         </section>
 
         {/* ── SECTION 2 — Active Certifications ───────────── */}
-        <section id="active-certs" className="scroll-mt-24 mb-16">
+        <section id="active-certifications" className="scroll-mt-24 mb-16">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={vp} transition={trans(0.25)}>
             {/* CHANGE 2: bold header, no // */}
             <p className="font-mono mb-6" style={{ fontWeight: 'bold', fontSize: 16, color: T, letterSpacing: 2 }}>
@@ -318,7 +318,7 @@ export default function CertificationsPage() {
                   <div
                     style={{ position: 'relative', cursor: 'pointer' }}
                     onClick={() => setModal({ kind: 'active', index: i })}
-                    onMouseEnter={() => setHoveredCard(`active-${i}`)}
+                    onMouseEnter={() => { setHoveredCard(`active-${i}`); window.dispatchEvent(new Event('certifications:cardEntered')) }}
                     onMouseLeave={() => setHoveredCard(null)}
                   >
                     <span style={{
@@ -389,7 +389,7 @@ export default function CertificationsPage() {
                   <div
                     style={{ position: 'relative', cursor: 'pointer' }}
                     onClick={() => setModal({ kind: 'inprogress', index: i })}
-                    onMouseEnter={() => setHoveredCard(`ip-${i}`)}
+                    onMouseEnter={() => { setHoveredCard(`ip-${i}`); window.dispatchEvent(new Event('certifications:cardEntered')) }}
                     onMouseLeave={() => setHoveredCard(null)}
                   >
                     <span style={{

@@ -11,6 +11,24 @@
   font-display: swap;
 }
 
+/* ─── Autograf — splash signature font ─────────────────── */
+@font-face {
+  font-family: 'Autograf';
+  src: url('/fonts/AutografPersonalUseOnly.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Brittany Signature — splash signature font ───────── */
+@font-face {
+  font-family: 'Brittany Signature';
+  src: url('/fonts/BrittanySignature.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ─── Kill native cursor everywhere — must be outside @layer so it
        wins over browser UA stylesheet and any component styles ───── */
 *, *::before, *::after {
@@ -193,6 +211,19 @@ section { scroll-margin-top: 80px; }
   50%       { opacity: 1;   }
 }
 
+/* ─── Connect page — typewriter cursor ─────────────────────── */
+.typewriter-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  color: #4a3020;
+  font-weight: 400;
+  animation: connectTypewriterBlink 1s steps(2, end) infinite;
+}
+@keyframes connectTypewriterBlink {
+  0%, 50%  { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 /* ─── Calendly widget — clip iframe to container height ────── */
 .calendly-inline-widget {
   overflow: hidden !important;
@@ -202,4 +233,32 @@ section { scroll-margin-top: 80px; }
   min-height: calc(100vh - 120px) !important;
   overflow: hidden !important;
   border: none !important;
+}
+
+/* ─── Cinematic home page reveal (synchronized with splash fade-out) ─── */
+.home-page-reveal {
+  animation: homePageFocusReveal 1.4s
+             cubic-bezier(0.22, 0.61, 0.36, 1)
+             forwards;
+  /* GPU acceleration hints */
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@keyframes homePageFocusReveal {
+  0% {
+    opacity: 0;
+    transform: scale(1.08) translateY(12px);
+    filter: blur(8px);
+  }
+  40% {
+    opacity: 0.4;
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
 }

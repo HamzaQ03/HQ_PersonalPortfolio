@@ -1,214 +1,342 @@
 'use client'
-import { useState, useEffect } from 'react'
+
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { splashState } from '@/lib/splashState'
+import {
+  SIGNATURE_PATH_D,
+  SIGNATURE_VB_W,
+  SIGNATURE_VB_H,
+} from '@/lib/splashSignature'
 
 /* ─────────────────────────────────────────────────────────────
-   SignatureSVG — rendered inside BOTH curtain panels.
-   The left panel clips it to the left half (Hamza).
-   The right panel clips it to the right half (Qureshi).
-   Each half rides outward with its panel when curtains open.
-───────────────────────────────────────────────────────────── */
-function SignatureSVG({ side }: { side: 'L' | 'R' }) {
-  const hamzaId   = `splash-sig-reveal-hamza-${side}`
-  const qureshi = `splash-sig-reveal-qureshi-${side}`
+   Splash — cinematic nameplate intro (6.9 s total)
 
-  return (
-    <svg
-      viewBox="0 0 900 220"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
-      aria-hidden="true"
-    >
-      <defs>
-        {/* Hamza reveal: left-to-right wipe, 12.5% → 37.5% of 8 s */}
-        <clipPath id={hamzaId}>
-          <rect
-            x="0" y="0" height="220"
-            style={{ animation: 'splash-hamza-reveal 8s cubic-bezier(0.45,0.05,0.55,0.95) forwards' }}
-          />
-        </clipPath>
-        {/* Qureshi reveal: left-to-right wipe, 41.25% → 78.75% of 8 s */}
-        <clipPath id={qureshi}>
-          <rect
-            x="380" y="0" height="220"
-            style={{ animation: 'splash-qureshi-reveal 8s cubic-bezier(0.45,0.05,0.55,0.95) forwards' }}
-          />
-        </clipPath>
-      </defs>
+   Phase 1 (0.0s → 0.6s): cinematic city video and nameplate frame
+                          fade in from black.
+   Phase 2 (0.5s → 4.5s): the vectorized "Hamza Qureshi" signature
+                          is revealed left-to-right via an eased
+                          clip-path wipe, with a slight pause
+                          around the gap between the two names.
+   Phase 3 (4.6s → 5.4s): the underline arc sweeps in L→R.
+   Phase 4 (5.4s → 5.8s): the dot lands at the end of the underline.
+   Phase 5 (5.7s → 6.9s): entire splash fades out (1.2s), revealing /home.
 
-      {/* "Hamza" in PrimorStylish, revealed left-to-right */}
-      <text
-        x="40" y="160"
-        fill="#ffffff"
-        clipPath={`url(#${hamzaId})`}
-        style={{
-          fontFamily: "'Primor Stylish', cursive",
-          fontSize: '140px',
-          fontWeight: 400,
-        }}
-      >
-        Hamza
-      </text>
+   The home page lives at /home, so the splash navigates there
+   early (behind the overlay) and marks the splash as shown so
+   ShellWrapper's gate doesn't bounce it back to /. The overlay is
+   portalled to document.body so it sits above the navbar / side
+   nav / AI logo that ShellWrapper renders once on /home.
 
-      {/* "Qureshi" in PrimorStylish, revealed left-to-right after pen-lift */}
-      <text
-        x="390" y="160"
-        fill="#ffffff"
-        clipPath={`url(#${qureshi})`}
-        style={{
-          fontFamily: "'Primor Stylish', cursive",
-          fontSize: '140px',
-          fontWeight: 400,
-        }}
-      >
-        Qureshi
-      </text>
-    </svg>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Splash — layout-level overlay, plays on every visit.
-
-   Phase timeline (8 s total):
-     0  s –  1.0 s  (0  – 12.5%) Panels closed, signature invisible
-     1.0s –  3.0 s  (12.5– 37.5%) Signature strokes draw in
-     3.0s –  3.3 s  (37.5– 41.25%) Signature fully drawn, brief hold
-     3.3s –  6.8 s  (41.25– 85%)  Curtains slide open (cubic-bezier)
-     6.8s –  8.0 s  (85% –100%)   Panels fully off-screen
-     8.0 s           Component unmounts (body scroll restored)
+   Note: monsieur_signature.svg is a *filled glyph-outline*
+   vectorization (fill-rule evenodd, closed contours), so a true
+   stroke-dashoffset pen-trace is not possible. The signature is
+   rendered as a solid fill and revealed with an eased directional
+   clip-path wipe. The underline is a genuine single-stroke path,
+   so it uses a real stroke-dashoffset draw.
 ───────────────────────────────────────────────────────────── */
 export default function Splash() {
   const router = useRouter()
-  const [mounted, setSplashMounted] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
-    setSplashMounted(true)
-    // Mark shown immediately — ShellWrapper gate checks this at render time
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
+    // Mark shown immediately so ShellWrapper's gate keeps /home mounted
     splashState.markShown()
 
-    // Lock body scroll while overlay is present
-    const prevOverflow = document.body.style.overflow
+    // Lock body scroll while splash is visible
     document.body.style.overflow = 'hidden'
 
-    // Navigate to /home exactly when curtains start opening (41.25% of 8 s = 3300 ms)
-    // Home page loads behind the curtains; by the time they finish (6800 ms) it is ready.
-    const tNav  = setTimeout(() => router.push('/home'), 3300)
-    const tDone = setTimeout(() => {
-      document.body.style.overflow = prevOverflow
+    // Navigate to /home behind the overlay so it is loaded and
+    // rendered underneath well before the Phase 5 fade-out.
+    const navTimer = setTimeout(() => {
+      router.push('/home')
+    }, 300)
+
+    // Total splash duration: 6.9s (5.7s fade-out start + 1.2s fade-out)
+    const doneTimer = setTimeout(() => {
+      document.body.style.overflow = ''
       setSplashDone(true)
-    }, 8000)
+    }, 6900)
 
     return () => {
-      clearTimeout(tNav)
-      clearTimeout(tDone)
-      document.body.style.overflow = prevOverflow
+      clearTimeout(navTimer)
+      clearTimeout(doneTimer)
+      document.body.style.overflow = ''
     }
-  }, [router])
+  }, [mounted, router])
 
   if (!mounted || splashDone) return null
 
-  return (
-    <>
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 99999,
+        backgroundColor: '#000000',
+        overflow: 'hidden',
+        cursor: 'none',
+        animation: 'splashFadeOut 1.2s ease-in-out 5.7s forwards',
+      }}
+      aria-hidden="true"
+    >
       <style>{`
-        /* ── Curtain keyframes ──────────────────────────────────── */
-        @keyframes splashCurtainL {
-          0%, 41.25% {
-            transform: translateX(0);
-            animation-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
-          }
-          85%, 100% { transform: translateX(-100%); }
+        @keyframes splashFadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
         }
-        @keyframes splashCurtainR {
-          0%, 41.25% {
-            transform: translateX(0);
-            animation-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
-          }
-          85%, 100% { transform: translateX(100%); }
+        @keyframes splashBgFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-
-        /* ── Signature text-reveal keyframes ────────────────────── */
-        /* Rect width animates 0 → full, producing a left-to-right  */
-        /* wipe reveal on the <text> elements via clipPath.          */
-        @keyframes splash-hamza-reveal {
-          0%, 12.5% { width: 0px; }
-          37.5%, 100% { width: 380px; }
+        /* Signature reveal — eased left-to-right clip-path wipe of
+           the filled signature, with a slight hold around the
+           Hamza/Qureshi gap so it reads like writing rather than a
+           flat sliding mask. */
+        @keyframes splashSigReveal {
+          0%   { clip-path: inset(0 100% 0 0); }
+          45%  { clip-path: inset(0 50% 0 0); }
+          55%  { clip-path: inset(0 45% 0 0); }
+          100% { clip-path: inset(0 0% 0 0); }
         }
-        @keyframes splash-qureshi-reveal {
-          0%, 41.25% { width: 0px; }
-          78.75%, 100% { width: 520px; }
+        /* Underline sweep — a genuine single-stroke path, drawn
+           via stroke-dashoffset. */
+        @keyframes splashUnderlineDraw {
+          from { stroke-dashoffset: 600; }
+          to   { stroke-dashoffset: 0; }
+        }
+        /* Dot fade-in with a slight scale pop. */
+        @keyframes splashDotLand {
+          0%   { opacity: 0; transform: scale(0.3); }
+          70%  { opacity: 1; transform: scale(1.15); }
+          100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
 
-      {/* ── Outer fixed wrapper ──────────────────────────────────── */}
+      {/* Cinematic city-at-night video background — looped infinitely,
+          slightly blurred so the foreground signature stays the hero. */}
+      <video
+        src="/City_Night_AI.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+          // Brightness drop replaces the CSS blur for a much
+          // cheaper "background" feel — real-time blur on a
+          // playing 1080p video was the largest per-frame GPU
+          // cost.
+          filter: 'brightness(0.75)',
+          // Slight scale hides any sub-pixel artifacts at the
+          // perimeter against the #000 wrapper.
+          transform: 'scale(1.05) translateZ(0)',
+          opacity: 0,
+          animation: 'splashBgFadeIn 0.6s ease-out forwards',
+          willChange: 'transform, opacity',
+          backfaceVisibility: 'hidden',
+          WebkitFontSmoothing: 'antialiased',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Soft radial vignette on top of the video — darkens the
+          edges so the nameplate sits in a slightly brighter zone
+          and the signature stays readable. */}
       <div
         style={{
-          position: 'fixed',
+          position: 'absolute',
           inset: 0,
-          zIndex: 99999,
-          pointerEvents: 'auto',
+          background:
+            'radial-gradient(ellipse at center, ' +
+            'rgba(0,0,0,0.15) 0%, ' +
+            'rgba(0,0,0,0.45) 70%, ' +
+            'rgba(0,0,0,0.65) 100%)',
+          opacity: 0,
+          animation: 'splashBgFadeIn 0.6s ease-out forwards',
+          pointerEvents: 'none',
         }}
-        aria-hidden="true"
+      />
+
+      {/* Nameplate frame — gold-bordered semi-transparent panel with
+          a backdrop blur on its interior, sitting visually behind
+          the signature. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) translateZ(0)',
+          width: 'min(38vw, 580px)',
+          aspectRatio: '4 / 1',
+          background: 'rgba(5, 5, 5, 0.55)',
+          border: '1.5px solid #c8a87c',
+          boxShadow:
+            '0 0 24px rgba(200, 168, 124, 0.25), ' +
+            '0 0 60px rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(3px)',
+          WebkitBackdropFilter: 'blur(3px)',
+          opacity: 0,
+          animation: 'splashBgFadeIn 0.6s ease-out 0.2s forwards',
+          willChange: 'transform, opacity',
+          backfaceVisibility: 'hidden',
+          WebkitFontSmoothing: 'antialiased',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Inner decorative hairline — completes the museum-placard
+          double-frame look. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(38vw, 580px)',
+          aspectRatio: '4 / 1',
+          pointerEvents: 'none',
+          opacity: 0,
+          animation: 'splashBgFadeIn 0.6s ease-out 0.3s forwards',
+        }}
       >
-
-        {/* ── LEFT curtain panel ───────────────────────────────── */}
-        {/* Slides left (-100%) during Phase 5.                    */}
-        {/* Its SVG container is 200% wide starting at left:0,     */}
-        {/* clipped to show only the left half → "Hamza" half.     */}
         <div
           style={{
             position: 'absolute',
-            top: 0, bottom: 0, left: 0,
-            width: '50%',
-            background: '#050505',
-            animation: 'splashCurtainL 8s linear 0s both',
+            inset: '8px',
+            border: '0.5px solid rgba(200, 168, 124, 0.5)',
+            pointerEvents: 'none',
           }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: 0,
-              width: '200%',         /* spans full viewport width   */
-              transform: 'translateY(-50%)',
-              clipPath: 'inset(0 50% 0 0)', /* show left half only  */
-            }}
-          >
-            <SignatureSVG side="L" />
-          </div>
-        </div>
-
-        {/* ── RIGHT curtain panel ──────────────────────────────── */}
-        {/* Slides right (+100%) during Phase 5.                   */}
-        {/* Its SVG container is 200% wide, left:-100% so it       */}
-        {/* starts at viewport x=0, clipped to right half          */}
-        {/* → "Qureshi" half.                                       */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0, bottom: 0, right: 0,
-            width: '50%',
-            background: '#050505',
-            animation: 'splashCurtainR 8s linear 0s both',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '-100%',         /* shift left so SVG aligns with viewport x=0 */
-              width: '200%',         /* spans full viewport width                   */
-              transform: 'translateY(-50%)',
-              clipPath: 'inset(0 0 0 50%)', /* show right half only */
-            }}
-          >
-            <SignatureSVG side="R" />
-          </div>
-        </div>
-
+        />
       </div>
-    </>
+
+      {/* Signature composition — filled signature SVG stacked above
+          the underline + dot SVG, centered inside the nameplate
+          frame. zIndex puts it above the video / vignette / frame. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) translateZ(0)',
+          // Container width sits inside the 580px nameplate with
+          // ~35px of breathing room each side. The signature SVG
+          // inherits this width; the underline+dot SVG is
+          // positioned absolutely inside this container so it
+          // does NOT add layout height (otherwise the signature
+          // gets pushed up out of frame center).
+          width: 'min(34vw, 510px)',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          zIndex: 10,
+          willChange: 'transform, opacity',
+          backfaceVisibility: 'hidden',
+          WebkitFontSmoothing: 'antialiased',
+        }}
+      >
+        {/* SIGNATURE — filled glyph-outline, revealed left-to-right */}
+        <svg
+          viewBox={`0 0 ${SIGNATURE_VB_W} ${SIGNATURE_VB_H}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{
+            display: 'block',
+            width: '100%',
+            // At the 510px container width the 3066:748 viewBox
+            // renders at ~510×118 — leaves 13-14px of breathing
+            // room above the H ascender and below the Q descender
+            // inside the 580×145 nameplate interior. The space
+            // below the signature gives the underline and dot
+            // room to land without crossing the gold border.
+            height: 'auto',
+            maxHeight: 'min(11vh, 118px)',
+            overflow: 'visible',
+            clipPath: 'inset(0 100% 0 0)',
+            animation: 'splashSigReveal 5s ease-out 0.5s forwards',
+            willChange: 'clip-path, transform',
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitFontSmoothing: 'antialiased',
+          }}
+        >
+          <path
+            d={SIGNATURE_PATH_D}
+            fill="#ffffff"
+            fillRule="evenodd"
+            stroke="none"
+            style={{
+              filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))',
+            }}
+          />
+        </svg>
+
+        {/* UNDERLINE + DOT — a separate SVG below the signature */}
+        <svg
+          viewBox="0 0 600 40"
+          preserveAspectRatio="xMinYMid meet"
+          style={{
+            // Absolute positioning keeps this SVG out of the
+            // composition's layout flow so it doesn't push the
+            // signature off vertical center. Sits low across the
+            // signature, anchoring beneath the last few letters.
+            position: 'absolute',
+            top: '80%',
+            left: 0,
+            width: '100%',
+            height: 'auto',
+            overflow: 'visible',
+            willChange: 'clip-path, transform',
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitFontSmoothing: 'antialiased',
+          }}
+        >
+          {/* Underline arc — starts under "ur" of "ureshi" and
+              sweeps gently up to the right. */}
+          <path
+            d="M 380 25 Q 480 18 580 14"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            fill="none"
+            style={{
+              strokeDasharray: 600,
+              strokeDashoffset: 600,
+              filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))',
+              animation: 'splashUnderlineDraw 0.8s ease-out 4.6s forwards',
+            }}
+          />
+          {/* Dot — lands after the underline finishes, with a clear
+              gap (line ends at x=490, dot at x=555). */}
+          <circle
+            cx="605"
+            cy="13"
+            r="5"
+            fill="#ffffff"
+            style={{
+              opacity: 0,
+              filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.6))',
+              transformOrigin: '605px 13px',
+              animation: 'splashDotLand 0.4s ease-out 5.4s forwards',
+            }}
+          />
+        </svg>
+      </div>
+    </div>,
+    document.body
   )
 }

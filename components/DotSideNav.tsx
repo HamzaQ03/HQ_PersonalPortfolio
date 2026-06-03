@@ -11,17 +11,14 @@ const PAGE_SECTIONS: Record<string, { id: string; label: string }[]> = {
     { id: 'tagline',  label: 'Tagline'  },
     { id: 'bio',      label: 'Bio'      },
   ],
-  '/education': [
-    { id: 'degrees',  label: 'Degrees'  },
-    { id: 'degree-1', label: 'Degree 1' },
-    { id: 'degree-2', label: 'Degree 2' },
-    { id: 'honors',   label: 'Honors'   },
-  ],
   '/skills': [
-    { id: 'technical',   label: 'Technical'   },
-    { id: 'frameworks',  label: 'Frameworks'  },
-    { id: 'tools',       label: 'Tools'       },
-    { id: 'soft-skills', label: 'Soft Skills' },
+    { id: 'technical',    label: 'Technical'    },
+    { id: 'grc',          label: 'GRC'          },
+    { id: 'aa',           label: 'A&A'          },
+    { id: 'cloud',        label: 'Cloud'        },
+    { id: 'tools',        label: 'Tools'        },
+    { id: 'soft',         label: 'Soft'         },
+    { id: 'professional', label: 'Competencies' },
   ],
   '/experience': [
     { id: 'role-1', label: 'Role 1' },
@@ -31,31 +28,19 @@ const PAGE_SECTIONS: Record<string, { id: string; label: string }[]> = {
     { id: 'role-5', label: 'Role 5' },
     { id: 'role-6', label: 'Role 6' },
   ],
-  '/projects': [
-    { id: 'project-1', label: 'Project 1' },
-    { id: 'project-2', label: 'Project 2' },
-    { id: 'project-3', label: 'Project 3' },
-    { id: 'project-4', label: 'Project 4' },
-    { id: 'project-5', label: 'Project 5' },
-    { id: 'project-6', label: 'Project 6' },
-  ],
   '/certifications': [
-    { id: 'active-certs', label: 'Active'      },
-    { id: 'in-progress',  label: 'In Progress' },
-  ],
-  '/reviews': [
-    { id: 'testimonials', label: 'Testimonials' },
-    { id: 'leave-review', label: 'Leave Review' },
-  ],
-  '/connect': [
-    { id: 'contact-info', label: 'Contact Info' },
-    { id: 'contact-form', label: 'Contact Form' },
+    { id: 'clearance',             label: 'Clearance'             },
+    { id: 'active-certifications', label: 'Active Certifications' },
+    { id: 'in-progress',           label: 'In Progress'           },
   ],
 }
 
 export default function DotSideNav() {
-  const pathname     = usePathname()
-  const isExperience = pathname === '/experience'
+  const pathname           = usePathname()
+  const isExperience       = pathname === '/experience'
+  const isCertifications   = pathname === '/certifications'
+  const isSkills           = pathname === '/skills'
+  const useHoverPreview    = isExperience || isCertifications || isSkills
 
   // ── All hooks declared unconditionally (Rules of Hooks) ──
   const [active,  setActive]  = useState<string>('')
@@ -86,16 +71,22 @@ export default function DotSideNav() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
-  // Cancel return-scroll when the user enters a role card (experience page only)
+  // Cancel return-scroll when the user enters a card (experience + certifications pages)
   useEffect(() => {
-    if (!isExperience) return
+    if (!useHoverPreview) return
     const handler = () => {
       if (returnTimer.current) { clearTimeout(returnTimer.current); returnTimer.current = null }
       savedScrollY.current = null
     }
     window.addEventListener('experience:roleCardEntered', handler)
-    return () => window.removeEventListener('experience:roleCardEntered', handler)
-  }, [isExperience])
+    window.addEventListener('certifications:cardEntered', handler)
+    window.addEventListener('skills:cardEntered', handler)
+    return () => {
+      window.removeEventListener('experience:roleCardEntered', handler)
+      window.removeEventListener('certifications:cardEntered', handler)
+      window.removeEventListener('skills:cardEntered', handler)
+    }
+  }, [useHoverPreview])
 
   // ── Early returns AFTER all hooks ──
   if (pathname === '/' || pathname === '/home' || sections.length === 0) return null
@@ -106,7 +97,7 @@ export default function DotSideNav() {
 
   function handleDotEnter(id: string) {
     setHovered(id)
-    if (!isExperience) return
+    if (!useHoverPreview) return
     // Save original position only on the very first hover in this sequence
     if (savedScrollY.current === null) savedScrollY.current = window.scrollY
     // Cancel any pending return timer (e.g. moving dot-to-dot)
@@ -116,7 +107,7 @@ export default function DotSideNav() {
 
   function handleDotLeave() {
     setHovered(null)
-    if (!isExperience) return
+    if (!useHoverPreview) return
     // Start a 250ms window — if cursor enters a role card, the event handler cancels this
     returnTimer.current = setTimeout(() => {
       if (savedScrollY.current !== null) {

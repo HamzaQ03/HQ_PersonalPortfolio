@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { playClickSound } from '@/lib/sound'
 import ScheduleMeetingModal from '@/components/ScheduleMeetingModal'
 import ContactMessageModal from '@/components/ContactMessageModal'
+import { useTypewriter } from '@/components/hooks/useTypewriter'
 
 const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }
 const vp = { once: true, margin: '-60px' }
@@ -297,388 +298,7 @@ function ResumeModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   )
 }
 
-/* ── Bookmark component ──────────────────────────────── */
-
-interface BookmarkProps {
-  number: string
-  name: string
-  subtitle: string
-  onClick: () => void
-}
-
-function Bookmark({ number, name, subtitle, onClick }: BookmarkProps) {
-  return (
-    <>
-      <style>{`
-        .bk-wrap {
-          width: 110px;
-          height: 200px;
-          position: relative;
-          cursor: pointer;
-          padding: 18px 8px 24px;
-          box-sizing: border-box;
-          clip-path: polygon(0 0, 100% 0, 100% 90%, 50% 100%, 0 90%);
-          background: linear-gradient(180deg, #faf8f3, #ebe7dc);
-          border: 1px solid rgba(140,90,44,0.2);
-          box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-          transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
-                      box-shadow 250ms ease;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          flex-shrink: 0;
-        }
-        .bk-wrap:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 14px 28px rgba(0,0,0,0.6);
-        }
-        @keyframes tasselSway {
-          0%, 100% { transform: translateX(-50%) rotate(0deg); }
-          33%       { transform: translateX(-50%) rotate(6deg); }
-          66%       { transform: translateX(-50%) rotate(-4deg); }
-        }
-        .bk-wrap:hover .bk-tassel-thread,
-        .bk-wrap:hover .bk-tassel-bunch {
-          animation: tasselSway 600ms ease-in-out;
-          transform-origin: top center;
-        }
-        @media (max-width: 768px) {
-          .bk-wrap {
-            width: 90px !important;
-            height: 170px !important;
-          }
-          .bk-name {
-            font-size: 12px !important;
-          }
-        }
-      `}</style>
-      <button
-        className="bk-wrap"
-        onClick={onClick}
-        style={{ background: 'none', border: 'none', padding: 0 }}
-      >
-        {/* Re-apply bookmark styles via inline since button resets them */}
-        <div style={{
-          width: 110,
-          height: 200,
-          position: 'relative',
-          cursor: 'pointer',
-          padding: '18px 8px 24px',
-          boxSizing: 'border-box',
-          clipPath: 'polygon(0 0, 100% 0, 100% 90%, 50% 100%, 0 90%)',
-          background: 'linear-gradient(180deg, #faf8f3, #ebe7dc)',
-          border: '1px solid rgba(140,90,44,0.2)',
-          boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          flexShrink: 0,
-        }}>
-          {/* No. header */}
-          <span style={{
-            fontFamily: "'Times New Roman', serif",
-            fontStyle: 'italic',
-            fontSize: 9,
-            color: '#4a3020',
-            letterSpacing: 2,
-            textAlign: 'center',
-            display: 'block',
-            whiteSpace: 'nowrap',
-          }}>
-            — {number} —
-          </span>
-
-          {/* Name */}
-          <span
-            className="bk-name"
-            style={{
-              fontFamily: "'Times New Roman', serif",
-              fontWeight: 700,
-              fontSize: 13,
-              color: '#1a1410',
-              letterSpacing: 1,
-              textAlign: 'center',
-              lineHeight: 1.2,
-              marginTop: 14,
-              display: 'block',
-            }}
-          >
-            {name}
-          </span>
-
-          {/* Rule */}
-          <div style={{
-            width: '30%',
-            height: 1,
-            background: '#4a3020',
-            margin: '10px auto',
-            flexShrink: 0,
-          }} />
-
-          {/* Subtitle */}
-          <span style={{
-            fontFamily: "'Times New Roman', serif",
-            fontStyle: 'italic',
-            fontSize: 11,
-            color: '#4a3020',
-            textAlign: 'center',
-            display: 'block',
-          }}>
-            {subtitle}
-          </span>
-
-          {/* Tassel thread */}
-          <div
-            className="bk-tassel-thread"
-            style={{
-              position: 'absolute',
-              bottom: -22,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 1.5,
-              height: 14,
-              background: '#4a3020',
-            }}
-          />
-
-          {/* Tassel bunch */}
-          <div
-            className="bk-tassel-bunch"
-            style={{
-              position: 'absolute',
-              bottom: -36,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 18,
-              height: 22,
-              borderRadius: '0 0 50% 50% / 0 0 70% 70%',
-              background: 'linear-gradient(180deg, #faf8f3, #4a3020)',
-            }}
-          />
-        </div>
-      </button>
-    </>
-  )
-}
-
-/* ── Parchment Letter ────────────────────────────────── */
-
-interface ParchmentLetterProps {
-  onLinkedIn:      () => void
-  onContactInfo:   () => void
-  onResume:        () => void
-  onSchedule:      () => void
-  onSendText:      () => void
-}
-
-function ParchmentLetter({
-  onLinkedIn, onContactInfo, onResume, onSchedule, onSendText,
-}: ParchmentLetterProps) {
-  const [letterDate, setLetterDate] = useState('')
-
-  useEffect(() => {
-    setLetterDate(formatLetterDate(new Date()))
-  }, [])
-
-  const monoBody: React.CSSProperties = {
-    fontFamily: "'Courier New', Courier, monospace",
-    fontSize: 13,
-    lineHeight: 1.9,
-    color: '#2a1810',
-  }
-
-  return (
-    <>
-      <style>{`
-        @keyframes blink {
-          50% { opacity: 0; }
-        }
-        .bk-cursor {
-          display: inline-block;
-          width: 7px;
-          height: 14px;
-          background: #2a1810;
-          vertical-align: middle;
-          margin-left: 3px;
-          animation: blink 1s step-end infinite;
-        }
-        @media (max-width: 768px) {
-          .parchment-letter {
-            padding: 30px 24px 70px !important;
-            transform: rotate(0deg) !important;
-          }
-          .bk-row {
-            gap: 10px !important;
-          }
-          .bk-row .bk-inner {
-            width: 90px !important;
-            height: 170px !important;
-          }
-          .bk-row .bk-name {
-            font-size: 12px !important;
-          }
-        }
-      `}</style>
-
-      <div
-        className="parchment-letter"
-        style={{
-          width: '100%',
-          maxWidth: 900,
-          margin: '0 auto 60px',
-          padding: '50px 60px 90px',
-          background: 'linear-gradient(180deg, #f5e8d4 0%, #ead7b8 50%, #f5e8d4 100%)',
-          borderRadius: 4,
-          boxShadow: '0 20px 50px rgba(0,0,0,0.6), inset 0 0 60px rgba(140,90,44,0.08)',
-          position: 'relative',
-          fontFamily: "'Courier New', Courier, monospace",
-          color: '#2a1810',
-          transform: 'rotate(-0.3deg)',
-        }}
-      >
-        {/* Inner dashed border */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: 8, left: 14, right: 14, bottom: 8,
-            border: '1px dashed rgba(42,24,16,0.15)',
-            pointerEvents: 'none',
-            borderRadius: 2,
-          }}
-        />
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 0 }}>
-          <p style={{
-            fontFamily: "'Times New Roman', serif",
-            fontStyle: 'italic',
-            fontWeight: 700,
-            fontSize: 13,
-            color: '#8c5a2c',
-            letterSpacing: 4,
-            margin: '0 0 6px',
-          }}>
-            — FROM THE DESK OF —
-          </p>
-          <p style={{
-            fontFamily: "'Times New Roman', serif",
-            fontWeight: 700,
-            fontSize: 22,
-            color: '#2a1810',
-            letterSpacing: 6,
-            margin: 0,
-            paddingBottom: 16,
-            borderBottom: '1px solid rgba(140,90,44,0.3)',
-          }}>
-            HAMZA QURESHI
-          </p>
-        </div>
-
-        {/* Date */}
-        <p style={{
-          fontFamily: "'Courier New', monospace",
-          fontStyle: 'italic',
-          fontSize: 11,
-          color: '#5a3a20',
-          textAlign: 'right',
-          margin: '16px 0 24px',
-        }}>
-          {letterDate}
-        </p>
-
-        {/* Greeting */}
-        <p style={{
-          fontFamily: "'Courier New', monospace",
-          fontSize: 16,
-          fontWeight: 700,
-          color: '#2a1810',
-          margin: '0 0 16px',
-        }}>
-          Dear visitor,
-        </p>
-
-        {/* Body */}
-        <p style={{ ...monoBody, margin: '0 0 30px' }}>
-          Thank you for stopping by. I appreciate your time,
-          and if you&apos;d like to reach me, I&apos;ve prepared five
-          bookmarks below. Pick whichever suits you best.
-          <span className="bk-cursor" aria-hidden="true" />
-        </p>
-
-        {/* ── Bookmark row ── */}
-        <div
-          className="bk-row"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 16,
-            flexWrap: 'wrap',
-            margin: '30px 0',
-            paddingBottom: 50,
-          }}
-        >
-          <BookmarkCard
-            number="No. 01"
-            name={'LINKEDIN'}
-            subtitle="▸ Network ▸"
-            onClick={onLinkedIn}
-          />
-          <BookmarkCard
-            number="No. 02"
-            name={'CONTACT\nINFO'}
-            subtitle="▸ Direct ▸"
-            onClick={onContactInfo}
-          />
-          <BookmarkCard
-            number="No. 03"
-            name={'DOWNLOAD\nRESUME'}
-            subtitle="▸ Request ▸"
-            onClick={onResume}
-          />
-          <BookmarkCard
-            number="No. 04"
-            name={'SCHEDULE\nMEETING'}
-            subtitle="▸ 30 Min ▸"
-            onClick={onSchedule}
-          />
-          <BookmarkCard
-            number="No. 05"
-            name={'SEND A\nTEXT'}
-            subtitle="▸ Message ▸"
-            onClick={onSendText}
-          />
-        </div>
-
-        {/* Sign-off */}
-        <p style={{ ...monoBody, margin: '0 0 12px' }}>
-          Awaiting your response,
-        </p>
-        <p style={{
-          fontFamily: "'Times New Roman', serif",
-          fontStyle: 'italic',
-          fontWeight: 700,
-          fontSize: 18,
-          color: '#2a1810',
-          margin: '0 0 4px',
-        }}>
-          — Hamza
-        </p>
-        <p style={{
-          fontFamily: "'Courier New', monospace",
-          fontSize: 11,
-          color: '#5a3a20',
-          letterSpacing: 1,
-          margin: 0,
-        }}>
-          CYBERSECURITY · GRC · A&amp;A
-        </p>
-      </div>
-    </>
-  )
-}
-
-/* ── Bookmark card (self-contained, hover handled via CSS class) ── */
+/* ── Bookmark card ───────────────────────────────────── */
 
 interface BookmarkCardProps {
   number: string
@@ -692,7 +312,7 @@ function BookmarkCard({ number, name, subtitle, onClick }: BookmarkCardProps) {
   const lines = name.split('\n')
 
   return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
+    <div style={{ position: 'relative', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <button
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -773,45 +393,250 @@ function BookmarkCard({ number, name, subtitle, onClick }: BookmarkCardProps) {
         </span>
       </button>
 
-      {/* Tassel thread */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: -22,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 1.5,
-          height: 14,
-          background: '#4a3020',
-          animation: hovered ? 'tasselSway 600ms ease-in-out' : 'none',
-          transformOrigin: 'top center',
-        }}
-      />
+      {/* ── Tapered gold inkdrop ── */}
+      <svg
+        width="110"
+        height="60"
+        viewBox="0 0 110 60"
+        style={{ display: 'block', marginTop: '-2px', pointerEvents: 'none' }}
+        aria-hidden="true"
+      >
+        <path
+          d="M 50 0 Q 55 30 55 50 Q 55 30 60 0"
+          fill="#1a1410"
+          opacity="0.9"
+        />
+      </svg>
+    </div>
+  )
+}
 
-      {/* Tassel bunch */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: -36,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 18,
-          height: 22,
-          borderRadius: '0 0 50% 50% / 0 0 70% 70%',
-          background: 'linear-gradient(180deg, #faf8f3, #4a3020)',
-          animation: hovered ? 'tasselSway 600ms ease-in-out' : 'none',
-          transformOrigin: 'top center',
-        }}
-      />
+/* ── Parchment Letter ────────────────────────────────── */
 
+interface ParchmentLetterProps {
+  onLinkedIn:    () => void
+  onContactInfo: () => void
+  onResume:      () => void
+  onSchedule:    () => void
+  onSendText:    () => void
+}
+
+const P1_TEXT = 'Dear Visitor,'
+const P2_TEXT = 'Glad to see you made it this far.'
+const P3_TEXT = 'If you\'re reading this, something on the previous pages probably caught your attention. Whether it\'s a project, a question, an opportunity, or just a simple "hello", whichever it is, I\'d genuinely love to hear from you.'
+const P4_TEXT = 'Below are five ways to reach me. Pick whichever suits you well. My door is always open for meaningful conversations and new connections, so let\'s connect and build something great together.'
+
+function ParchmentLetter({
+  onLinkedIn, onContactInfo, onResume, onSchedule, onSendText,
+}: ParchmentLetterProps) {
+  const [letterDate, setLetterDate] = useState('')
+  const [mounted, setMounted] = useState(false)
+  const [shouldPlay, setShouldPlay] = useState(false)
+
+  useEffect(() => { setLetterDate(formatLetterDate(new Date())) }, [])
+  useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const hasPlayed = sessionStorage.getItem('connect-typewriter-played')
+      if (!hasPlayed) {
+        setShouldPlay(true)
+        sessionStorage.setItem('connect-typewriter-played', '1')
+      }
+    } catch {
+      setShouldPlay(false)
+    }
+  }, [])
+
+  const shouldAnimate = mounted && shouldPlay
+
+  const p1 = useTypewriter(P1_TEXT, 35, 0, shouldAnimate)
+  const p2 = useTypewriter(P2_TEXT, 28, shouldAnimate ? 700 : 0, shouldAnimate)
+  const p3 = useTypewriter(P3_TEXT, 22, shouldAnimate ? 2200 : 0, shouldAnimate)
+  const p4 = useTypewriter(P4_TEXT, 22, shouldAnimate ? 7000 : 0, shouldAnimate)
+
+  const monoBody: React.CSSProperties = {
+    fontFamily: "'Georgia', serif",
+    fontSize: 13,
+    fontWeight: 400,
+    lineHeight: 1.9,
+    color: '#1a1410',
+  }
+
+  return (
+    <>
       <style>{`
-        @keyframes tasselSway {
-          0%, 100% { transform: translateX(-50%) rotate(0deg); }
-          33%       { transform: translateX(-50%) rotate(6deg); }
-          66%       { transform: translateX(-50%) rotate(-4deg); }
+        @media (max-width: 768px) {
+          .parchment-letter {
+            transform: rotate(0deg) !important;
+          }
+          .bk-row {
+            gap: 10px !important;
+          }
+          .bk-name {
+            font-size: 12px !important;
+          }
         }
       `}</style>
-    </div>
+
+      <div
+        className="parchment-letter"
+        style={{
+          width: '100%',
+          maxWidth: 900,
+          margin: '0 auto 60px',
+          padding: '50px 60px 90px',
+          background: 'linear-gradient(180deg, #f5e8d4 0%, #ead7b8 50%, #f5e8d4 100%)',
+          borderRadius: 4,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.6), inset 0 0 60px rgba(140,90,44,0.08)',
+          position: 'relative',
+          fontFamily: "'Courier New', Courier, monospace",
+          color: '#2a1810',
+          transform: 'rotate(-0.3deg)',
+        }}
+      >
+          {/* Inner dashed border */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 8, left: 14, right: 14, bottom: 8,
+              border: '1px dashed rgba(42,24,16,0.15)',
+              pointerEvents: 'none',
+              borderRadius: 2,
+            }}
+          />
+
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 0 }}>
+            <p style={{
+              fontFamily: "'Times New Roman', serif",
+              fontStyle: 'italic',
+              fontWeight: 700,
+              fontSize: 13,
+              color: '#8c5a2c',
+              letterSpacing: 4,
+              margin: '0 0 6px',
+            }}>
+              — FROM THE DESK OF —
+            </p>
+            <p style={{
+              fontFamily: "'Times New Roman', serif",
+              fontWeight: 700,
+              fontSize: 22,
+              color: '#2a1810',
+              letterSpacing: 6,
+              margin: 0,
+              paddingBottom: 16,
+              borderBottom: '1px solid rgba(140,90,44,0.3)',
+            }}>
+              HAMZA QURESHI
+            </p>
+          </div>
+
+          {/* Date */}
+          <p style={{
+            fontFamily: "'Georgia', serif",
+            fontStyle: 'italic',
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1a1410',
+            textAlign: 'right',
+            margin: '16px 0 24px',
+          }}>
+            {letterDate}
+          </p>
+
+          {/* Body copy — four paragraphs, typewriter animated on first session visit */}
+          <p style={{ ...monoBody, margin: '0 0 22px' }}>
+            {p1.displayed}
+          </p>
+          <p style={{ ...monoBody, margin: '0 0 22px' }}>
+            {p2.displayed}
+          </p>
+          <p style={{ ...monoBody, margin: '0 0 22px' }}>
+            {p3.displayed}
+          </p>
+          <p style={{ ...monoBody, margin: '0 0 30px' }}>
+            {p4.displayed}
+            {p4.isDone && (
+              <span className="typewriter-cursor" aria-hidden="true">|</span>
+            )}
+          </p>
+
+          {/* ── Bookmark row ── */}
+          <div
+            className="bk-row"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
+              margin: '30px 0',
+              paddingBottom: 50,
+            }}
+          >
+            {/* ── Change 5: LINKEDIN → LINKEDIN REDIRECT ── */}
+            <BookmarkCard
+              number="No. 01"
+              name={'LINKEDIN\nREDIRECT'}
+              subtitle="▸ Network ▸"
+              onClick={onLinkedIn}
+            />
+            <BookmarkCard
+              number="No. 02"
+              name={'CONTACT\nINFO'}
+              subtitle="▸ Direct ▸"
+              onClick={onContactInfo}
+            />
+            <BookmarkCard
+              number="No. 03"
+              name={'DOWNLOAD\nRESUME'}
+              subtitle="▸ Request ▸"
+              onClick={onResume}
+            />
+            <BookmarkCard
+              number="No. 04"
+              name={'SCHEDULE\nMEETING'}
+              subtitle="▸ 30 Min ▸"
+              onClick={onSchedule}
+            />
+            <BookmarkCard
+              number="No. 05"
+              name={'SEND A\nTEXT'}
+              subtitle="▸ Message ▸"
+              onClick={onSendText}
+            />
+          </div>
+
+          {/* Sign-off */}
+          <p style={{ ...monoBody, margin: '0 0 12px' }}>
+            Awaiting your response,
+          </p>
+          <p style={{
+            fontFamily: "'Times New Roman', serif",
+            fontStyle: 'italic',
+            fontWeight: 700,
+            fontSize: 18,
+            color: '#2a1810',
+            margin: '0 0 4px',
+          }}>
+            — Hamza Qureshi
+          </p>
+          <p style={{
+            fontFamily: "'Georgia', serif",
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1a1410',
+            letterSpacing: 1,
+            margin: 0,
+          }}>
+            Cybersecurity Compliance Specialist
+          </p>
+
+      </div>
+    </>
   )
 }
 

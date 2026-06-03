@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import '../styles/globals.css'
+import '@fontsource/monsieur-la-doulaise'
 import ShellWrapper from '@/components/ShellWrapper'
 import SmoothScrollProvider from '@/components/SmoothScrollProvider'
 import Splash from '@/components/Splash'
