@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 export async function GET() {
   try {
     const { createClient } = await import('@supabase/supabase-js')

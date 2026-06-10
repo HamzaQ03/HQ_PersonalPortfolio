@@ -1,5 +1,7 @@
 ﻿import { Resend } from 'resend'
 
+export const runtime = 'edge'
+
 export async function POST(req: Request) {
   try {
     const data = await req.json()

@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 
+export const runtime = 'edge'
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const id     = searchParams.get('id')

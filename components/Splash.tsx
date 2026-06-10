@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { splashState } from '@/lib/splashState'
@@ -45,6 +45,14 @@ export default function Splash() {
   const [mounted, setMounted] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  // Stash the router in a ref so the mount/unmount effect below
+  // doesn't have to take `router` as a dep. If `useRouter()` were
+  // ever non-stable across renders, taking it as a dep would tear
+  // down the navTimer/doneTimer before they fire and the splash
+  // would never reach /home or unmount.
+  const routerRef = useRef(router)
+  routerRef.current = router
 
   useEffect(() => {
     setMounted(true)
@@ -68,12 +76,16 @@ export default function Splash() {
     // Navigate to /home behind the overlay so it is loaded and
     // rendered underneath well before the Phase 6 fade-out.
     const navTimer = setTimeout(() => {
-      router.push('/home')
+      routerRef.current.push('/home')
     }, 300)
 
     // Total splash duration: 8.5s (7.3s fade-out start + 1.2s fade).
+    // Also re-push /home as a safety net — Next.js no-ops if we're
+    // already there, but if the 300ms push got eaten by a render
+    // race this guarantees the user reaches /home before we unmount.
     const doneTimer = setTimeout(() => {
       document.body.style.overflow = ''
+      routerRef.current.push('/home')
       setSplashDone(true)
     }, 8500)
 
@@ -83,7 +95,73 @@ export default function Splash() {
       clearTimeout(doneTimer)
       document.body.style.overflow = ''
     }
-  }, [mounted, router])
+  }, [mounted])
+
+  // Reverse-loop playback. Plays forward to the end, then steps
+  // backward through frames via requestAnimationFrame, then forward
+  // again — eliminates the "loop snap" of a hard restart since the
+  // city camera ends in a different position than it starts.
+  useEffect(() => {
+    if (!mounted) return
+
+    const video = videoRef.current
+    if (!video) return
+
+    let direction: 1 | -1 = 1
+    let rafId: number | null = null
+
+    // Step backward one frame's worth of duration per render frame,
+    // matching the source video's 24fps frame rate.
+    const REVERSE_STEP_PER_FRAME = 1 / 24
+
+    const tick = () => {
+      if (!video) return
+
+      if (direction === 1) {
+        // Forward — native browser playback. Intervene only at the
+        // tail end of the clip.
+        if (video.currentTime >= video.duration - 0.05) {
+          direction = -1
+          video.pause()
+        }
+      } else {
+        // Reverse — browsers can't natively play backward, so step
+        // currentTime backward manually on every render frame.
+        const newTime = video.currentTime - REVERSE_STEP_PER_FRAME
+        if (newTime <= 0.05) {
+          direction = 1
+          video.currentTime = 0
+          video.play().catch(() => {
+            // autoplay may be blocked — ignore
+          })
+        } else {
+          video.currentTime = newTime
+        }
+      }
+
+      rafId = requestAnimationFrame(tick)
+    }
+
+    const startTicking = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(tick)
+      }
+    }
+
+    if (video.readyState >= 3) {
+      startTicking()
+    } else {
+      video.addEventListener('canplay', startTicking, { once: true })
+    }
+
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+        rafId = null
+      }
+      video.removeEventListener('canplay', startTicking)
+    }
+  }, [mounted])
 
   if (!mounted || splashDone) return null
 
@@ -109,13 +187,22 @@ export default function Splash() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        /* Mask slide — translucent black gradient that translates
-           right over the static signature. translateX is composited
-           on the GPU; the signature underneath is never re-rasterized
-           during the reveal. */
-        @keyframes splashMaskSlide {
-          0%   { transform: translateX(0%); }
-          100% { transform: translateX(100%); }
+        /* Mask reveal — animates the CSS mask-position on the
+           signature SVG itself. No separate overlay element, so
+           nothing visually occludes the video underneath. The mask
+           is 400% wide with a soft black-to-transparent edge; as
+           mask-position slides from 100% (signature fully hidden)
+           to 0% (signature fully revealed), the soft edge sweeps
+           across, fading the signature in left-to-right. */
+        @keyframes splashMaskReveal {
+          0%   {
+            mask-position: 100% 0%;
+            -webkit-mask-position: 100% 0%;
+          }
+          100% {
+            mask-position: 0% 0%;
+            -webkit-mask-position: 0% 0%;
+          }
         }
         @keyframes splashUnderlineDraw {
           from { stroke-dashoffset: 1200; }
@@ -130,9 +217,9 @@ export default function Splash() {
 
       {/* Cinematic city video background */}
       <video
-        src="/City_Night_AI.mp4"
+        ref={videoRef}
+        src="/City_Night_AI2.mp4"
         autoPlay
-        loop
         muted
         playsInline
         preload="auto"
@@ -199,51 +286,59 @@ export default function Splash() {
             backfaceVisibility: 'hidden',
           }}
         >
-          {/* Signature SVG + sliding mask layered on top */}
-          <div style={{ position: 'relative', width: '100%' }}>
-            {/* Static signature — rendered once, never re-rasterized */}
-            <svg
-              viewBox={`0 0 ${SIGNATURE_VB_W} ${SIGNATURE_VB_H}`}
-              preserveAspectRatio="xMidYMid meet"
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-              }}
-            >
-              <path
-                d={SIGNATURE_PATH_D}
-                fill="#ffffff"
-                stroke="none"
-              />
-            </svg>
-
-            {/* Sliding mask — translucent gradient that translates
-                right via the GPU compositor to reveal the static
-                signature underneath. The soft trailing edge avoids
-                a hard line moving across. */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background:
-                  'linear-gradient(to right, ' +
-                  'rgba(0,0,0,1) 70%, ' +
-                  'rgba(0,0,0,0.95) 85%, ' +
-                  'rgba(0,0,0,0.4) 95%, ' +
-                  'rgba(0,0,0,0) 100%)',
-                transform: 'translateX(0%)',
-                animation:
-                  'splashMaskSlide 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.3s forwards',
-                willChange: 'transform',
-                backfaceVisibility: 'hidden',
-                pointerEvents: 'none',
-              }}
+          {/* Signature with CSS mask-image gradient reveal. The
+              mask lives as a property on the signature SVG itself
+              — no separate overlay element — so nothing visually
+              occludes the city video underneath. The mask gradient
+              is 400% wide with a soft black-to-transparent edge;
+              mask-position animates from 100% (fully masked) to 0%
+              (fully revealed), sweeping the soft edge across the
+              signature. */}
+          <svg
+            viewBox={`0 0 ${SIGNATURE_VB_W} ${SIGNATURE_VB_H}`}
+            preserveAspectRatio="xMidYMid meet"
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              maskImage:
+                'linear-gradient(to right, ' +
+                'black 0%, ' +
+                'black 25%, ' +
+                'transparent 35%, ' +
+                'transparent 100%)',
+              WebkitMaskImage:
+                'linear-gradient(to right, ' +
+                'black 0%, ' +
+                'black 25%, ' +
+                'transparent 35%, ' +
+                'transparent 100%)',
+              maskSize: '400% 100%',
+              WebkitMaskSize: '400% 100%',
+              // Base value matches the animation END state ("revealed").
+              // The animation's keyframe 0% explicitly resets it to the
+              // hidden state during the play window. Using `both` fill
+              // mode means the keyframe 0% value (hidden) also covers
+              // the 0.3s delay, so the signature doesn't flash visible
+              // before the reveal starts. If the animation is ever
+              // released by the browser, the base value (revealed) is
+              // what persists — the signature can't vanish.
+              maskPosition: '0% 0%',
+              WebkitMaskPosition: '0% 0%',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+              animation:
+                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.3s both',
+              willChange: 'mask-position',
+              backfaceVisibility: 'hidden',
+            }}
+          >
+            <path
+              d={SIGNATURE_PATH_D}
+              fill="#ffffff"
+              stroke="none"
             />
-          </div>
+          </svg>
 
           {/* Underline + dot below the signature */}
           <svg
