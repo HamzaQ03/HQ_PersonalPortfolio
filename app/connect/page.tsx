@@ -166,14 +166,6 @@ function ContactModal({ open, onClose }: { open: boolean; onClose: () => void })
 
 /* ── Resume Access Modal ─────────────────────────────── */
 
-const REASON_OPTIONS = [
-  'Recruiting / Hiring opportunity',
-  'Reviewing for a referral',
-  'Networking / Professional connection',
-  'Academic / Research collaboration',
-  'Other professional reason',
-]
-
 const resumeInputStyle: React.CSSProperties = {
   background: '#000000',
   border: '1px solid rgba(200,168,124,0.25)',
@@ -187,113 +179,226 @@ const resumeInputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-type ResumeStage = 'form' | 'preview'
-
 function ResumeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [stage, setStage]         = useState<ResumeStage>('form')
-  const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState({
-    fullName: '', email: '', company: '', jobTitle: '', reason: '',
-  })
+  const [fullName,    setFullName]    = useState('')
+  const [workEmail,   setWorkEmail]   = useState('')
+  const [company,     setCompany]     = useState('')
+  const [phone,       setPhone]       = useState('')
+  const [reason,      setReason]      = useState('')
+  const [submitting,  setSubmitting]  = useState(false)
+  const [submitted,   setSubmitted]   = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   function resetAndClose() {
     onClose()
-    setTimeout(() => { setStage('form'); setForm({ fullName:'', email:'', company:'', jobTitle:'', reason:'' }) }, 300)
+    setTimeout(() => {
+      setFullName(''); setWorkEmail(''); setCompany(''); setPhone(''); setReason('')
+      setSubmitted(false); setSubmitError(null)
+    }, 300)
   }
+
+  const isValid =
+    fullName.trim().length > 0 &&
+    workEmail.trim().length > 0 &&
+    company.trim().length > 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (submitting) return
+    if (!isValid || submitting) return
+
     playClickSound()
     setSubmitting(true)
+    setSubmitError(null)
+
     try {
-      await fetch('/api/resume-access', {
+      const res = await fetch('/api/resume-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          fullName:  fullName.trim(),
+          workEmail: workEmail.trim(),
+          company:   company.trim(),
+          phone:     phone.trim(),
+          reason:    reason.trim(),
+        }),
       })
-      setStage('preview')
+
+      const data = await res.json().catch(() => ({ ok: false }))
+
+      if (!res.ok || !data.ok) {
+        setSubmitError(data?.error || 'Request failed. Please try again.')
+        setSubmitting(false)
+        return
+      }
+
+      setSubmitted(true)
+
+      setTimeout(() => {
+        setFullName(''); setWorkEmail(''); setCompany(''); setPhone(''); setReason('')
+        setSubmitted(false); setSubmitError(null)
+        onClose()
+      }, 4000)
     } catch (err) {
-      console.error('[resume-access]', err)
+      console.error('Resume access form error:', err)
+      setSubmitError('Network error. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
+  const labelStyle: React.CSSProperties = {
+    fontFamily: 'monospace', fontSize: 9, color: A, letterSpacing: 2,
+    display: 'block', marginBottom: 6,
+  }
+
   return (
     <ModalShell open={open} onClose={resetAndClose} maxWidth={540}>
-      {stage === 'form' ? (
-        <>
-          <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 22, color: T, margin: '0 0 12px' }}>
-            Request Resume Access
-          </h3>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: '0 0 24px' }}>
-            Thanks for your interest in my work! Please share a few quick details so I know who I&apos;m connecting with.
-            You&apos;ll get instant preview access and I&apos;ll review your request to enable download.
-          </p>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ fontFamily: 'monospace', fontSize: 9, color: A, letterSpacing: 2, display: 'block', marginBottom: 6 }}>
-                FULL NAME *
-              </label>
-              <input required type="text" placeholder="Your full name" style={resumeInputStyle}
-                value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} />
-            </div>
-            <div>
-              <label style={{ fontFamily: 'monospace', fontSize: 9, color: A, letterSpacing: 2, display: 'block', marginBottom: 6 }}>
-                PROFESSIONAL EMAIL *
-              </label>
-              <input required type="email" placeholder="you@company.com" style={resumeInputStyle}
-                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-            </div>
-            <div>
-              <label style={{ fontFamily: 'monospace', fontSize: 9, color: A, letterSpacing: 2, display: 'block', marginBottom: 6 }}>
-                COMPANY / ORGANIZATION
-              </label>
-              <input type="text" placeholder="Where you work" style={resumeInputStyle}
-                value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} />
-            </div>
-            <div>
-              <label style={{ fontFamily: 'monospace', fontSize: 9, color: A, letterSpacing: 2, display: 'block', marginBottom: 6 }}>
-                REASON FOR ACCESSING *
-              </label>
-              <select required style={{ ...resumeInputStyle, appearance: 'none' as const }}
-                value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}>
-                <option value="" disabled>Select a reason</option>
-                {REASON_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                fontFamily: 'monospace', fontSize: 12, letterSpacing: 2,
-                background: 'rgba(200,168,124,0.1)', border: '1px solid rgba(200,168,124,0.5)',
-                color: A, padding: 12, borderRadius: 6, cursor: 'pointer', width: '100%',
-                marginTop: 24,
-              }}
-            >
-              {submitting ? 'Submitting...' : 'Request Access →'}
-            </button>
-          </form>
-        </>
-      ) : (
-        <>
-          <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#22c55e', margin: '0 0 20px' }}>
-            ✓ Access granted for preview
-          </p>
-          <iframe
-            src="/resume.pdf#toolbar=0"
-            width="100%"
-            height="600"
-            style={{ borderRadius: 8, border: '1px solid rgba(200,168,124,0.2)', display: 'block' }}
-            title="Resume Preview"
+      <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 22, color: T, margin: '0 0 12px' }}>
+        Request Resume Access
+      </h3>
+      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: '0 0 24px' }}>
+        Below, please submit your details to request resume access. Requests are
+        reviewed and approved within 48 hours, typically faster. Once approved, you
+        will receive a secure download link from contact@hamzaqureshi.dev.
+      </p>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Full Name */}
+        <div>
+          <label style={labelStyle}>
+            FULL NAME <span style={{ color: A }}>*</span>
+          </label>
+          <input
+            required type="text" placeholder="Your full name"
+            style={resumeInputStyle}
+            value={fullName}
+            onChange={e => setFullName(e.target.value)}
+            disabled={submitting || submitted}
           />
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, marginTop: 16, marginBottom: 0 }}>
-            Download is pending Hamza&apos;s approval. You&apos;ll receive an email at the address you provided once access is granted.
-          </p>
-        </>
-      )}
+        </div>
+
+        {/* Work Email */}
+        <div>
+          <label style={labelStyle}>
+            WORK EMAIL <span style={{ color: A }}>*</span>
+          </label>
+          <input
+            required type="email" placeholder="you@company.com"
+            style={resumeInputStyle}
+            value={workEmail}
+            onChange={e => setWorkEmail(e.target.value)}
+            disabled={submitting || submitted}
+          />
+        </div>
+
+        {/* Company / Organization */}
+        <div>
+          <label style={labelStyle}>
+            COMPANY / ORGANIZATION <span style={{ color: A }}>*</span>
+          </label>
+          <input
+            required type="text" placeholder="Where you work"
+            style={resumeInputStyle}
+            value={company}
+            onChange={e => setCompany(e.target.value)}
+            disabled={submitting || submitted}
+          />
+        </div>
+
+        {/* Phone — optional */}
+        <div>
+          <label style={labelStyle}>PHONE</label>
+          <input
+            type="tel" placeholder="+1 (000) 000-0000"
+            style={resumeInputStyle}
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            disabled={submitting || submitted}
+          />
+        </div>
+
+        {/* Reason — optional textarea */}
+        <div>
+          <label style={labelStyle}>REASON FOR REQUEST</label>
+          <textarea
+            rows={4}
+            placeholder="Optional. Although a short note about the nature of your request would be highly appreciated"
+            style={{
+              ...resumeInputStyle,
+              resize: 'vertical',
+              minHeight: 90,
+              fontFamily: 'Inter, sans-serif',
+            }}
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            disabled={submitting || submitted}
+          />
+        </div>
+
+        {/* Submit button — 4-state UI */}
+        <button
+          type="submit"
+          disabled={!isValid || submitting || submitted}
+          style={{
+            fontFamily: 'monospace', fontSize: 12, letterSpacing: 2,
+            background: submitted
+              ? 'rgba(34,197,94,0.1)'
+              : submitError
+                ? 'rgba(180,30,30,0.15)'
+                : 'rgba(200,168,124,0.1)',
+            border: `1px solid ${
+              submitted
+                ? 'rgba(34,197,94,0.5)'
+                : submitError
+                  ? 'rgba(220,60,60,0.6)'
+                  : 'rgba(200,168,124,0.5)'
+            }`,
+            color: submitted ? '#22c55e' : submitError ? '#ff6464' : A,
+            padding: 12, borderRadius: 6,
+            cursor: !isValid || submitting || submitted ? 'not-allowed' : 'pointer',
+            opacity: !isValid && !submitted && !submitting && !submitError ? 0.45 : 1,
+            transition: 'all 200ms',
+            width: '100%', marginTop: 12,
+          }}
+        >
+          {submitted
+            ? '✓ REQUEST RECEIVED'
+            : submitting
+              ? '[ SUBMITTING... ]'
+              : submitError
+                ? '✗ REQUEST FAILED — TAP TO RETRY'
+                : '[ REQUEST ACCESS ]'}
+        </button>
+
+        {/* Success body — 4s window before auto-close */}
+        {submitted && (
+          <div style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: 13,
+            color: '#22c55e',
+            lineHeight: 1.6,
+            textAlign: 'center',
+            marginTop: 4,
+          }}>
+            Your request has been received. You will receive an email response within 48 hours, typically faster.
+          </div>
+        )}
+
+        {/* Error message from the API — inline, red, retry via button */}
+        {submitError && !submitted && (
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 11,
+            color: '#ff6464',
+            letterSpacing: 1,
+            textAlign: 'center',
+            lineHeight: 1.6,
+            marginTop: 4,
+          }}>
+            {submitError}
+          </div>
+        )}
+      </form>
     </ModalShell>
   )
 }

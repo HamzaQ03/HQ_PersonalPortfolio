@@ -42,8 +42,9 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
   const [phone,      setPhone]      = useState('')
   const [company,    setCompany]    = useState('')
   const [message,    setMessage]    = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted,  setSubmitted]  = useState(false)
+  const [submitting,  setSubmitting]  = useState(false)
+  const [submitted,   setSubmitted]   = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -69,18 +70,50 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid || submitting) return
+
     playClickSound()
     setSubmitting(true)
-    // Placeholder — wire up to Resend / EmailJS / API route when ready:
-    console.log('Contact message submitted:', { fullName, email, phone, company, message })
-    await new Promise(r => setTimeout(r, 800))
-    setSubmitting(false)
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setFullName(''); setEmail(''); setPhone(''); setCompany(''); setMessage('')
-      onClose()
-    }, 2000)
+    setSubmitError(null)
+
+    try {
+      const res = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email:    email.trim(),
+          phone:    phone.trim(),
+          company:  company.trim(),
+          message:  message.trim(),
+        }),
+      })
+
+      const data = await res.json().catch(() => ({ ok: false }))
+
+      if (!res.ok || !data.ok) {
+        const errMsg = data?.error || 'Transmission failed. Please try again.'
+        setSubmitError(errMsg)
+        setSubmitting(false)
+        return
+      }
+
+      // Success — message is persisted in Supabase. Email is
+      // best-effort; data.emailSent may be false even though save
+      // succeeded, but the user's intent is fulfilled either way.
+      setSubmitted(true)
+
+      setTimeout(() => {
+        setSubmitted(false)
+        setSubmitError(null)
+        setFullName(''); setEmail(''); setPhone(''); setCompany(''); setMessage('')
+        onClose()
+      }, 2000)
+    } catch (err) {
+      console.error('Contact form submit error:', err)
+      setSubmitError('Network error. Check your connection and try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!mounted) return null
@@ -139,13 +172,6 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
               gap: 16,
             }}>
               <div>
-                <p style={{
-                  fontFamily: 'monospace', fontSize: 9,
-                  color: A, letterSpacing: 2.5,
-                  margin: '0 0 6px',
-                }}>
-                  ▸ TRANSMISSION CHANNEL
-                </p>
                 <h3 style={{
                   fontFamily: 'var(--font-space-grotesk)',
                   fontWeight: 700, fontSize: 22, color: T, margin: 0,
@@ -174,9 +200,9 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
                 fontFamily: 'Inter, sans-serif', fontSize: 13,
                 color: TM, lineHeight: 1.7, margin: '0 0 24px',
               }}>
-                Drop a note below and I&apos;ll get back to you as soon as possible.
-                Whether it&apos;s an opportunity, a question, or just a hello —
-                your message reaches me directly.
+                Thanks for reaching out. Please fill out the details below,
+                hit transmit, and your message magically appears on my desk.
+                You should expect a reply before I finish my next coffee.
               </p>
 
               <form
@@ -298,14 +324,24 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
                   fontFamily: 'monospace', fontSize: 12, letterSpacing: 2,
                   background: submitted
                     ? 'rgba(34,197,94,0.1)'
-                    : 'rgba(200,168,124,0.1)',
-                  border: `1px solid ${submitted
-                    ? 'rgba(34,197,94,0.5)'
-                    : 'rgba(200,168,124,0.5)'}`,
-                  color: submitted ? '#22c55e' : A,
+                    : submitError
+                      ? 'rgba(180,30,30,0.15)'
+                      : 'rgba(200,168,124,0.1)',
+                  border: `1px solid ${
+                    submitted
+                      ? 'rgba(34,197,94,0.5)'
+                      : submitError
+                        ? 'rgba(220,60,60,0.6)'
+                        : 'rgba(200,168,124,0.5)'
+                  }`,
+                  color: submitted
+                    ? '#22c55e'
+                    : submitError
+                      ? '#ff6464'
+                      : A,
                   padding: 12, borderRadius: 6,
                   cursor: !isValid || submitting || submitted ? 'not-allowed' : 'pointer',
-                  opacity: !isValid && !submitted && !submitting ? 0.45 : 1,
+                  opacity: !isValid && !submitted && !submitting && !submitError ? 0.45 : 1,
                   transition: 'all 200ms',
                 }}
               >
@@ -313,8 +349,22 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
                   ? '✓ MESSAGE TRANSMITTED'
                   : submitting
                     ? '[ TRANSMITTING... ]'
-                    : '[ TRANSMIT MESSAGE ]'}
+                    : submitError
+                      ? '✗ TRANSMISSION FAILED — TAP TO RETRY'
+                      : '[ TRANSMIT MESSAGE ]'}
               </button>
+              {submitError && !submitted && (
+                <div style={{
+                  marginTop: 10,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 11,
+                  color: '#ff6464',
+                  letterSpacing: 1,
+                  textAlign: 'center',
+                }}>
+                  {submitError}
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>

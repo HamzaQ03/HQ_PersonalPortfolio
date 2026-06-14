@@ -11,7 +11,6 @@ interface Props {
 
 export default function ScheduleMeetingModal({ open, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
-  const [closeHover, setCloseHover] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -74,76 +73,71 @@ export default function ScheduleMeetingModal({ open, onClose }: Props) {
               position: 'relative',
             }}
           >
-            {/* ── Header ── */}
+            {/* ── Sticky header ─────────────────────────── */}
             <div style={{
-              padding: '18px 24px',
-              borderBottom: '1px solid rgba(200,168,124,0.3)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
               flexShrink: 0,
+              padding: '24px 32px 20px',
+              borderBottom: '1px solid rgba(200,168,124,0.12)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 16,
             }}>
-              {/* Left: labels */}
               <div>
-                <p style={{
-                  fontFamily: 'monospace',
-                  fontSize: 10,
-                  color: '#c8a87c',
-                  letterSpacing: 3,
-                  margin: 0,
-                }}>{'// SCHEDULE'}</p>
-                <h2 style={{
-                  fontFamily: 'var(--font-space-grotesk), sans-serif',
-                  fontWeight: 700,
-                  fontSize: 22,
-                  color: '#ffffff',
-                  margin: '4px 0 0',
-                }}>Book a Meeting</h2>
-                <p style={{
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  color: '#c8a87c',
-                  margin: '4px 0 0',
-                }}>Schedule a 30-minute interview or chat directly on my calendar.</p>
+                <h3 style={{
+                  fontFamily: 'var(--font-space-grotesk)',
+                  fontWeight: 700, fontSize: 22, color: '#f0f0f0', margin: 0,
+                }}>
+                  Book a Meeting
+                </h3>
               </div>
-
-              {/* Right: close button */}
               <button
                 onClick={() => { playClickSound(); onClose() }}
-                onMouseEnter={() => setCloseHover(true)}
-                onMouseLeave={() => setCloseHover(false)}
                 style={{
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  color: closeHover ? '#ffffff' : '#c8a87c',
-                  letterSpacing: 2,
-                  padding: '6px 12px',
-                  border: `1px solid ${closeHover ? '#c8a87c' : 'rgba(200,168,124,0.3)'}`,
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                  background: closeHover ? 'rgba(200,168,124,0.1)' : 'transparent',
-                  transition: 'all 180ms ease',
-                  flexShrink: 0,
+                  fontFamily: 'monospace', fontSize: 10,
+                  color: 'rgba(200,168,124,0.7)',
+                  border: '1px solid rgba(200,168,124,0.3)',
+                  background: 'transparent',
+                  padding: '4px 10px', borderRadius: 4,
+                  cursor: 'pointer', flexShrink: 0, marginTop: 4,
                 }}
-              >✕ CLOSE</button>
+              >
+                ✕ CLOSE
+              </button>
             </div>
 
-            {/* ── Calendly iframe ── */}
-            <div style={{
-              flex: 1,
-              overflow: 'hidden',
-              width: '100%',
-              height: 650,
-              background: '#ffffff',
-            }}>
-              <iframe
-                src="https://calendly.com/hamza-qureshi/30min?embed_domain=hamzaqureshi.com&embed_type=Inline"
-                width="100%"
-                height="100%"
-                frameBorder={0}
-                style={{ minHeight: 650, border: 'none', display: 'block' }}
-                title="Schedule a Meeting"
-              />
+            {/* ── Scrollable body — description + Calendly iframe.
+                Mirrors the Send a Message modal pattern: the body is
+                the only scrollable region. The iframe is given a
+                fixed tall height so Calendly's calendar, time zone
+                picker, and footer all fit inside without Calendly's
+                internal scroll kicking in. ───────────────────── */}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div style={{ padding: '24px 32px 0' }}>
+                <p style={{
+                  fontFamily: 'Inter, sans-serif', fontSize: 13,
+                  color: '#666677', lineHeight: 1.7, margin: '0 0 24px',
+                }}>
+                  Skip the &apos;what time works for you?&apos; email chain.
+                  Pick a slot below and book it directly on my calendar.
+                  Looking forward to speaking with you soon.
+                </p>
+              </div>
+
+              <div style={{
+                width: '100%',
+                height: 900,
+                background: '#ffffff',
+              }}>
+                <iframe
+                  src="https://calendly.com/hamza-qureshi/30min?embed_domain=hamzaqureshi.com&embed_type=Inline&hide_event_type_details=1&hide_gdpr_banner=1"
+                  width="100%"
+                  height="100%"
+                  frameBorder={0}
+                  style={{ border: 'none', display: 'block' }}
+                  title="Schedule a Meeting"
+                />
+              </div>
             </div>
           </motion.div>
         </motion.div>
