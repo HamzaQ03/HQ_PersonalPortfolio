@@ -460,7 +460,7 @@ function CardFaceContent({
   onExpand: (e: React.MouseEvent) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 330 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 215 }}>
       {/* ── Header (fixed) ── */}
       <div style={{ flexShrink: 0 }}>
         {/* Logo + title/info row */}
@@ -518,8 +518,8 @@ function CardFaceContent({
         flex: 1,
         overflow: 'hidden',
         minHeight: 0,
-        maskImage: 'linear-gradient(180deg, #000 60%, transparent 100%)',
-        WebkitMaskImage: 'linear-gradient(180deg, #000 60%, transparent 100%)',
+        maskImage: 'linear-gradient(180deg, #000 35%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(180deg, #000 35%, transparent 100%)',
       }}>
         {desc}
       </div>
@@ -762,12 +762,34 @@ export default function ExperiencePage() {
 
         {/* Page heading */}
         <motion.h2
-          className="font-heading text-4xl md:text-5xl font-bold mb-16"
+          className="font-heading text-4xl md:text-5xl font-bold mb-6"
           style={{ color: T, textAlign: 'center' }}
           variants={fadeUp} initial="hidden" whileInView="visible" viewport={vp} transition={trans(0.1)}
         >
           Professional Experience
         </motion.h2>
+
+        {/* Intro paragraph — matches Skills page style */}
+        <motion.p
+          style={{
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 400,
+            fontSize: 16,
+            color: 'rgba(245,232,212,0.7)',
+            lineHeight: 1.7,
+            textAlign: 'center',
+            maxWidth: 720,
+            margin: '0 auto 50px auto',
+            padding: '0 24px',
+          }}
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={vp}
+          transition={trans(0.15)}
+        >
+          Each role below reflects a deliberate step in the foundation of my career. Built on consistent execution, measurable outcomes, and the standards required to deliver in environments with no margin for error.
+        </motion.p>
 
         {/* Role cards */}
         <div className="flex flex-col gap-6">
@@ -777,6 +799,12 @@ export default function ExperiencePage() {
               <section key={role.id} id={role.id} className="scroll-mt-24">
                 <motion.div
                   variants={fadeUp} initial="hidden" whileInView="visible" viewport={vp} transition={trans(i * 0.07)}
+                  whileHover={{
+                    y: -6,
+                    boxShadow:
+                      '0 0 28px rgba(200,168,124,0.35), 0 12px 30px rgba(0,0,0,0.6)',
+                    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                  }}
                 >
                   <div
                     style={{ position: 'relative', cursor: 'pointer', perspective: '1500px' }}

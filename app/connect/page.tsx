@@ -81,7 +81,7 @@ function ModalShell({
             style={{
               position: 'relative',
               background: '#0a0a0a',
-              border: '1px solid rgba(200,168,124,0.25)',
+              border: '2px solid #c8a87c',
               borderRadius: 12,
               width: '100%',
               maxWidth,
@@ -116,7 +116,8 @@ function ContactItem({
 }: { icon: string; label: string; value: string }) {
   const [copied, setCopied] = useState(false)
 
-  function handleCopy() {
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation()
     navigator.clipboard.writeText(value).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
@@ -126,25 +127,67 @@ function ContactItem({
   return (
     <div
       onClick={handleCopy}
-      style={{ display: 'flex', alignItems: 'flex-start', gap: 14, cursor: 'pointer', position: 'relative' }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        cursor: 'pointer',
+        position: 'relative',
+        padding: '4px 0',
+      }}
     >
-      <span style={{ fontSize: 18, color: A, flexShrink: 0, marginTop: 2 }}>{icon}</span>
-      <div>
-        <p style={{ fontFamily: 'monospace', fontSize: 9, color: A, letterSpacing: 2, margin: '0 0 4px' }}>
+      <span style={{
+        fontSize: 18,
+        color: A,
+        flexShrink: 0,
+      }}>{icon}</span>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{
+          fontFamily: 'monospace',
+          fontSize: 9,
+          color: A,
+          letterSpacing: 2,
+          margin: '0 0 4px',
+        }}>
           {label}
         </p>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#e0e0e0', margin: 0 }}>
+        <p style={{
+          fontFamily: 'Inter, sans-serif',
+          fontSize: 14,
+          color: '#e0e0e0',
+          margin: 0,
+          wordBreak: 'break-word',
+        }}>
           {value}
         </p>
       </div>
-      {copied && (
-        <span style={{
-          position: 'absolute', right: 0, top: 0,
-          fontFamily: 'monospace', fontSize: 10, color: '#22c55e',
-          background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)',
-          padding: '2px 8px', borderRadius: 4,
-        }}>Copied!</span>
-      )}
+
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label={'Copy ' + label.toLowerCase()}
+        style={{
+          background: copied ? 'rgba(34,197,94,0.1)' : 'rgba(200,168,124,0.08)',
+          border: copied ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(200,168,124,0.3)',
+          color: copied ? '#22c55e' : A,
+          padding: '6px 10px',
+          borderRadius: 4,
+          cursor: 'pointer',
+          fontSize: 13,
+          transition: 'all 200ms ease',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontFamily: 'monospace',
+        }}
+      >
+        <span style={{ fontSize: 14 }}>{copied ? '✓' : '📋'}</span>
+        {copied && (
+          <span style={{ fontSize: 10, letterSpacing: 1 }}>COPIED</span>
+        )}
+      </button>
     </div>
   )
 }
@@ -155,10 +198,32 @@ function ContactModal({ open, onClose }: { open: boolean; onClose: () => void })
       <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 22, color: T, margin: '0 0 28px' }}>
         Contact Information
       </h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <ContactItem icon="✉" label="PERSONAL EMAIL" value="moehamzza@gmail.com" />
-        <ContactItem icon="✉" label="WORK EMAIL"     value="hamza.qureshi@triplepointsecurity.com" />
-        <ContactItem icon="☎" label="PHONE"          value="240-869-0210" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <ContactItem
+          icon="✉"
+          label="EMAIL FOR CONTACT"
+          value="contact@hamzaqureshi.dev"
+        />
+        <ContactItem
+          icon="✉"
+          label="EMAIL FOR INQUIRIES"
+          value="info@hamzaqureshi.dev"
+        />
+        <ContactItem
+          icon="✉"
+          label="WORK EMAIL"
+          value="hamza.qureshi@triplepointsecurity.com"
+        />
+        <ContactItem
+          icon="☎"
+          label="PHONE"
+          value="240-869-0210"
+        />
+        <ContactItem
+          icon="◈"
+          label="PORTFOLIO LINK"
+          value="https://hamzaqureshi.dev"
+        />
       </div>
     </ModalShell>
   )
@@ -523,7 +588,7 @@ interface ParchmentLetterProps {
   onContactInfo: () => void
   onResume:      () => void
   onSchedule:    () => void
-  onSendText:    () => void
+  onSendMessage: () => void
 }
 
 const P1_TEXT = 'Dear Visitor,'
@@ -532,7 +597,7 @@ const P3_TEXT = 'If you\'re reading this, something on the previous pages probab
 const P4_TEXT = 'Below are five ways to reach me. Pick whichever suits you well. My door is always open for meaningful conversations and new connections, so let\'s connect and build something great together.'
 
 function ParchmentLetter({
-  onLinkedIn, onContactInfo, onResume, onSchedule, onSendText,
+  onLinkedIn, onContactInfo, onResume, onSchedule, onSendMessage,
 }: ParchmentLetterProps) {
   const [letterDate, setLetterDate] = useState('')
   const [mounted, setMounted] = useState(false)
@@ -697,7 +762,7 @@ function ParchmentLetter({
             />
             <BookmarkCard
               number="No. 03"
-              name={'DOWNLOAD\nRESUME'}
+              name={'RESUME\nACCESS'}
               subtitle="▸ Request ▸"
               onClick={onResume}
             />
@@ -709,15 +774,15 @@ function ParchmentLetter({
             />
             <BookmarkCard
               number="No. 05"
-              name={'SEND A\nTEXT'}
+              name={'SEND A\nMESSAGE'}
               subtitle="▸ Message ▸"
-              onClick={onSendText}
+              onClick={onSendMessage}
             />
           </div>
 
           {/* Sign-off */}
           <p style={{ ...monoBody, margin: '0 0 12px' }}>
-            Awaiting your response,
+            Until we meet again,
           </p>
           <p style={{
             fontFamily: "'Times New Roman', serif",
@@ -725,9 +790,39 @@ function ParchmentLetter({
             fontWeight: 700,
             fontSize: 18,
             color: '#2a1810',
-            margin: '0 0 4px',
+            margin: '0 0 6px',
           }}>
-            — Hamza Qureshi
+            Hamza Qureshi
+          </p>
+          <p style={{
+            fontFamily: "'Georgia', serif",
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1a1410',
+            letterSpacing: 1,
+            margin: '0 0 2px',
+          }}>
+            Senior Cybersecurity Consultant
+          </p>
+          <p style={{
+            fontFamily: "'Georgia', serif",
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1a1410',
+            letterSpacing: 1,
+            margin: '0 0 2px',
+          }}>
+            AWS SAA-C03 | AZ-104 | Security+
+          </p>
+          <p style={{
+            fontFamily: "'Georgia', serif",
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1a1410',
+            letterSpacing: 1,
+            margin: '0 0 2px',
+          }}>
+            Email: contact@hamzaqureshi.dev
           </p>
           <p style={{
             fontFamily: "'Georgia', serif",
@@ -737,7 +832,7 @@ function ParchmentLetter({
             letterSpacing: 1,
             margin: 0,
           }}>
-            Cybersecurity Compliance Specialist
+            Phone: +1 (240) 869-0210
           </p>
 
       </div>
@@ -790,7 +885,7 @@ export default function ConnectPage() {
               onContactInfo={handleContactInfo}
               onResume={handleResume}
               onSchedule={handleSchedule}
-              onSendText={handleSendText}
+              onSendMessage={handleSendText}
             />
           </motion.div>
         </section>

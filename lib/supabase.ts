@@ -15,4 +15,7 @@ export type Review = {
   review_text: string
   approved: boolean
   created_at: string
+  reviewer_email?: string | null
+  recommendation_letter_url?: string | null
+  profile_picture_url?: string | null
 }

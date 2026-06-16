@@ -14,7 +14,11 @@ export default function SmoothScrollProvider({
   useEffect(() => {
     // Skip Lenis on the Skills page — native browser scroll is lighter there,
     // where hundreds of marquee cards already animate every frame.
-    if (pathname === '/skills') return
+    // Skip Lenis on /home too — the home page is locked to 100vh with no
+    // scroll; Lenis still intercepting wheel events would prevent the
+    // natural no-op behavior wheel scroll should have when there's nothing
+    // to scroll.
+    if (pathname === '/skills' || pathname === '/home') return
 
     const lenis = new Lenis({
       duration: 1.2,

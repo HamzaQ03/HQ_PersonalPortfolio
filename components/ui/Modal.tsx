@@ -44,7 +44,7 @@ export default function Modal({ open, onClose, children }: ModalProps) {
             <motion.div
               style={{
                 background: '#0a0a0a',
-                border: '1px solid rgba(200,168,124,0.25)',
+                border: '2px solid #c8a87c',
                 borderRadius: 12,
                 maxWidth: 560,
                 width: '100%',

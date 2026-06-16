@@ -51,7 +51,8 @@
       "mcp__Claude_in_Chrome__tabs_context_mcp",
       "Bash(curl -s -H \"RSC: 1\" -H \"Next-Router-Prefetch: 1\" \"http://localhost:3030/education\")",
       "Bash(pkill -f \"next dev --port 3030\")",
-      "Bash(findstr \":300\")"
+      "Bash(findstr \":300\")",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

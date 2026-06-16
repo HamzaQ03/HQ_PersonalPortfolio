@@ -196,7 +196,7 @@ export default function SecretAccessModal({ open, onClose }: Props) {
               onClick={e => e.stopPropagation()}
               style={{
                 background: '#050505',
-                border: '1px solid rgba(200,168,124,0.4)',
+                border: '2px solid #c8a87c',
                 borderRadius: 12,
                 maxWidth: 640, width: '100%',
                 maxHeight: '85vh', overflowY: 'auto',

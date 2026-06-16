@@ -184,63 +184,71 @@ function buildAdminEmailHtml(data: {
       .replace(/'/g, '&#39;')
 
   return `
-<div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 30px; background: #0a0a0a; color: #f5e8d4;">
-  <div style="border-bottom: 1px solid #c8a87c; padding-bottom: 16px; margin-bottom: 24px;">
-    <div style="font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; color: #c8a87c; text-transform: uppercase;">
-      HQ Portfolio · Resume Access Request
+<div style="font-family: Georgia, serif; max-width: 720px; margin: 0 auto; padding: 48px 32px; background: #ddd2cf; background: linear-gradient(135deg, #e8e6f0 0%, #ddd2cf 50%, #c9b4b0 100%); color: #2a2a2a; line-height: 1.7;">
+
+  <!-- Greeting -->
+  <div style="font-size: 18px; margin-bottom: 24px;">
+    Hi Hamza,
+  </div>
+
+  <!-- Opening paragraph -->
+  <div style="font-size: 15px; margin-bottom: 28px;">
+    A new resume access request has just landed in your inbox. Here are the details for your review.
+  </div>
+
+  <!-- Request details card -->
+  <div style="background: rgba(255,255,255,0.5); border: 1px solid rgba(42,42,42,0.2); border-radius: 4px; padding: 20px 24px; margin: 24px 0;">
+    <div style="font-size: 14px; margin-bottom: 12px;">
+      <strong>Name:</strong> ${escape(data.fullName)}
     </div>
-    <div style="font-size: 22px; margin-top: 8px; font-style: italic; color: #f5e8d4;">
-      New resume access request
+    <div style="font-size: 14px; margin-bottom: 12px;">
+      <strong>Email:</strong> ${escape(data.workEmail)}
     </div>
-  </div>
-
-  <div style="margin-bottom: 18px;">
-    <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #c8a87c; letter-spacing: 1.5px; text-transform: uppercase;">From</div>
-    <div style="font-size: 16px; margin-top: 4px;">${escape(data.fullName)}</div>
-  </div>
-
-  <div style="margin-bottom: 18px;">
-    <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #c8a87c; letter-spacing: 1.5px; text-transform: uppercase;">Company</div>
-    <div style="font-size: 16px; margin-top: 4px;">${escape(data.company)}</div>
-  </div>
-
-  <div style="margin-bottom: 18px;">
-    <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #c8a87c; letter-spacing: 1.5px; text-transform: uppercase;">Work Email</div>
-    <div style="font-size: 16px; margin-top: 4px;">
-      <a href="mailto:${escape(data.workEmail)}" style="color: #f5e8d4;">${escape(data.workEmail)}</a>
+    <div style="font-size: 14px; margin-bottom: ${data.phone || data.reason ? '12px' : '0'};">
+      <strong>Company:</strong> ${escape(data.company)}
     </div>
+    ${
+      data.phone
+        ? `<div style="font-size: 14px; margin-bottom: ${data.reason ? '12px' : '0'};">
+            <strong>Phone:</strong> ${escape(data.phone)}
+          </div>`
+        : ''
+    }
+    ${
+      data.reason
+        ? `<div style="font-size: 14px; margin-bottom: 0;">
+            <strong>Reason:</strong> ${escape(data.reason)}
+          </div>`
+        : ''
+    }
   </div>
 
-  ${
-    data.phone
-      ? `<div style="margin-bottom: 18px;">
-          <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #c8a87c; letter-spacing: 1.5px; text-transform: uppercase;">Phone</div>
-          <div style="font-size: 16px; margin-top: 4px;">${escape(data.phone)}</div>
-        </div>`
-      : ''
-  }
+  <!-- Approve / Decline button row -->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 32px 0; border-collapse: separate; border-spacing: 4px 0;">
+    <tr>
+      <td style="width: 50%;">
+        <a href="${data.approveUrl}" style="display: block; background: #2a2a2a; color: #ffffff; padding: 14px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 14px; text-decoration: none; font-weight: 500;">
+          Approve Request
+        </a>
+      </td>
+      <td style="width: 50%;">
+        <a href="${data.rejectUrl}" style="display: block; background: rgba(255,255,255,0.6); color: #2a2a2a; border: 1px solid #2a2a2a; padding: 13px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 14px; text-decoration: none;">
+          Decline Request
+        </a>
+      </td>
+    </tr>
+  </table>
 
-  ${
-    data.reason
-      ? `<div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #c8a87c;">
-          <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #c8a87c; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;">Reason for request</div>
-          <div style="font-size: 15px; line-height: 1.7; white-space: pre-wrap; font-style: italic; color: #ead7b8;">${escape(data.reason)}</div>
-        </div>`
-      : ''
-  }
-
-  <div style="margin-top: 36px; text-align: center;">
-    <a href="${data.approveUrl}" style="display: inline-block; padding: 14px 28px; background: #c8a87c; color: #0a0a0a; font-family: 'Courier New', monospace; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; margin-right: 8px;">
-      ✅ Approve &amp; Send Link
-    </a>
-    <a href="${data.rejectUrl}" style="display: inline-block; padding: 14px 28px; background: transparent; color: #f5e8d4; border: 1px solid #c8a87c; font-family: 'Courier New', monospace; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; margin-left: 8px;">
-      🗑 Reject Request
-    </a>
+  <!-- Instructional text -->
+  <div style="font-size: 14px; margin: 32px 0 20px 0;">
+    Approving will send the requester a secure 24-hour download link along with your portfolio resources. Declining will send a polite decline message. Either way, the request will be marked as resolved in your dashboard.
   </div>
 
-  <div style="margin-top: 32px; font-family: 'Courier New', monospace; font-size: 10px; color: #8a7960; letter-spacing: 1.5px; text-align: center;">
-    Request ID: ${escape(data.requestId)}
+  <!-- Automated disclaimer footer -->
+  <div style="margin-top: 32px; padding-top: 16px; border-top: 1px dashed rgba(42,42,42,0.3); font-family: Georgia, serif; font-size: 11px; color: rgba(42,42,42,0.6); line-height: 1.6; font-style: italic;">
+    This email was sent automatically when a new resume access request was submitted via hamzaqureshi.dev/connect.
   </div>
+
 </div>
   `.trim()
 }

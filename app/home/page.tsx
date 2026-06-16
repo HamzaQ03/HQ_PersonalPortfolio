@@ -18,8 +18,28 @@ export default function HomePage() {
     return () => clearTimeout(t1)
   }, [])
 
+  // Lock document scrolling while the home page is mounted. Saves the
+  // previous html/body overflow values and restores them on unmount,
+  // so navigating to /experience or any other page leaves their own
+  // scroll behavior untouched.
+  useEffect(() => {
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    const originalBodyOverflow = document.body.style.overflow
+
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow
+      document.body.style.overflow = originalBodyOverflow
+    }
+  }, [])
+
   return (
-    <div className="home-page-reveal">
+    <div
+      className="home-page-reveal"
+      style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden' }}
+    >
       {/* ── White overlay — bridges vault white flash ── */}
       <motion.div
         aria-hidden="true"

@@ -1232,17 +1232,18 @@ export default function SkillsPage() {
           const data = SKILLS_DATA[key]
           if (!activeFilters.has('all') && !activeFilters.has(data.id)) return null
           return (
-            <MarqueeRow
-              key={key}
-              data={data}
-              reverse={index % 2 === 1}
-              searchOpen={searchOpen}
-              searchQuery={debouncedQuery}
-              activeCardKey={activeCardKey}
-              matchCardKeySet={matchCardKeySet}
-              onTrackRef={handleTrackRef}
-              onCardRef={handleCardRef}
-            />
+            <section key={key} id={data.id} className="scroll-mt-24">
+              <MarqueeRow
+                data={data}
+                reverse={index % 2 === 1}
+                searchOpen={searchOpen}
+                searchQuery={debouncedQuery}
+                activeCardKey={activeCardKey}
+                matchCardKeySet={matchCardKeySet}
+                onTrackRef={handleTrackRef}
+                onCardRef={handleCardRef}
+              />
+            </section>
           )
         })}
 

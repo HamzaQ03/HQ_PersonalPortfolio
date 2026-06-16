@@ -61,7 +61,7 @@ export default function ScheduleMeetingModal({ open, onClose }: Props) {
             onClick={e => e.stopPropagation()}
             style={{
               background: '#0a0a0a',
-              border: '1px solid #c8a87c',
+              border: '2px solid #c8a87c',
               borderRadius: 12,
               width: '100%',
               maxWidth: 900,

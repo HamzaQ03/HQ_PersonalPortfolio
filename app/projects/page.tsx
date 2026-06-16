@@ -153,20 +153,21 @@ const STATUS_COLOR: Record<Status, string> = {
 const PAGE_STYLES = `
   .proj-card {
     background:    #0a0a0a;
-    border:        1px solid rgba(200,168,124,0.3);
+    border:        2px solid #c8a87c;
     border-radius: 10px;
     padding:       22px;
     position:      relative;
     overflow:      hidden;
-    transition:    all 280ms ease;
+    transition:    all 350ms cubic-bezier(0.16, 1, 0.3, 1);
     cursor:        pointer;
   }
   .proj-card:hover {
     border-color: #c8a87c;
     background:   #14100c;
-    box-shadow:   0 8px 28px rgba(200,168,124,0.12),
+    box-shadow:   0 0 28px rgba(200,168,124,0.35),
+                  0 12px 30px rgba(0,0,0,0.6),
                   inset 0 0 30px rgba(200,168,124,0.04);
-    transform:    translateY(-3px);
+    transform:    translateY(-6px);
   }
   .proj-view {
     color:       #c8a87c;

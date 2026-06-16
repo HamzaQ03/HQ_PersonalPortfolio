@@ -97,6 +97,14 @@ export default function DotSideNav() {
 
   function handleDotEnter(id: string) {
     setHovered(id)
+    // Move the active highlight to the hovered dot immediately so the
+    // taupe state follows the user's cursor even on pages where the
+    // scroll preview is interrupted and the IntersectionObserver never
+    // gets a chance to fire on the new section (e.g. /skills). On
+    // Experience/Certifications this is a no-op in practice — the
+    // observer reaffirms the same value once the preview scroll lands
+    // microseconds later.
+    setActive(id)
     if (!useHoverPreview) return
     // Save original position only on the very first hover in this sequence
     if (savedScrollY.current === null) savedScrollY.current = window.scrollY
@@ -123,6 +131,10 @@ export default function DotSideNav() {
     // Commit the position — cancel any pending return
     if (returnTimer.current) { clearTimeout(returnTimer.current); returnTimer.current = null }
     savedScrollY.current = null
+    // Lock the active highlight onto the clicked dot so it persists
+    // even if scroll-to-section is interrupted (same reasoning as the
+    // handleDotEnter setActive call above).
+    setActive(id)
     scrollToSection(id)
   }
 

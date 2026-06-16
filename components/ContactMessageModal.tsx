@@ -150,7 +150,7 @@ export default function ContactMessageModal({ isOpen, onClose }: Props) {
             style={{
               position: 'relative',
               background: '#0a0a0a',
-              border: '1px solid rgba(200,168,124,0.25)',
+              border: '2px solid #c8a87c',
               borderRadius: 12,
               width: '100%',
               maxWidth: 540,

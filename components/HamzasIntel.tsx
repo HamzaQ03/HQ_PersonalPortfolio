@@ -51,6 +51,7 @@ export default function HamzasIntel() {
   const [input, setInput]         = useState('')
   const [loading, setLoading]     = useState(false)
   const [history, setHistory]     = useState<HistoryEntry[]>([])
+  const [mode, setMode]           = useState<'professional' | 'casual'>('professional')
   const bottomRef                 = useRef<HTMLDivElement>(null)
   const inputRef                  = useRef<HTMLInputElement>(null)
 
@@ -87,7 +88,7 @@ export default function HamzasIntel() {
       const res = await fetch('/api/hamzas-intel', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ message: text, history }),
+        body:    JSON.stringify({ message: text, history, mode }),
       })
       const data = await res.json()
       const reply: string = data.reply ?? "Sorry, I couldn't get a response. Please try again."
@@ -232,7 +233,7 @@ export default function HamzasIntel() {
               width:          360,
               height:         500,
               background:     'rgba(0,0,0,0.92)',
-              border:         '1px solid rgba(200,168,124,0.2)',
+              border:         '2px solid #c8a87c',
               borderRadius:   12,
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
@@ -311,6 +312,58 @@ export default function HamzasIntel() {
                   transition:  'color 150ms',
                 }}
               >×</button>
+            </div>
+
+            {/* Mode toggle — PROFESSIONAL (default) / CASUAL */}
+            <div style={{
+              display: 'flex',
+              gap: '6px',
+              padding: '4px',
+              margin: '12px 16px 0 16px',
+              background: 'rgba(200, 168, 124, 0.06)',
+              borderRadius: '6px',
+              flexShrink: 0,
+            }}>
+              <button
+                onClick={() => setMode('professional')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: mode === 'professional' ? '#c8a87c' : 'transparent',
+                  color: mode === 'professional' ? '#0a0a0a' : 'rgba(245, 232, 212, 0.6)',
+                  borderRadius: '4px',
+                  textAlign: 'center',
+                  fontSize: '10px',
+                  fontFamily: '"JetBrains Mono", "Courier New", monospace',
+                  letterSpacing: '1.5px',
+                  fontWeight: mode === 'professional' ? 600 : 400,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                PROFESSIONAL
+              </button>
+              <button
+                onClick={() => setMode('casual')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: mode === 'casual' ? '#c8a87c' : 'transparent',
+                  color: mode === 'casual' ? '#0a0a0a' : 'rgba(245, 232, 212, 0.6)',
+                  borderRadius: '4px',
+                  textAlign: 'center',
+                  fontSize: '10px',
+                  fontFamily: '"JetBrains Mono", "Courier New", monospace',
+                  letterSpacing: '1.5px',
+                  fontWeight: mode === 'casual' ? 600 : 400,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                CASUAL
+              </button>
             </div>
 
             {/* Messages */}

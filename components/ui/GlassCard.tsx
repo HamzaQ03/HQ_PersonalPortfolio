@@ -64,7 +64,7 @@ export default function GlassCard({
       className={`relative rounded-xl p-6 backdrop-blur-sm ${className}`}
       style={{
         background: 'rgba(10,10,10,0.8)',
-        border: '1px solid rgba(200,168,124,0.15)',
+        border: '2px solid #c8a87c',
         borderRadius: 12,
         transformStyle: 'preserve-3d',
         perspective: 1000,
@@ -74,11 +74,13 @@ export default function GlassCard({
         translateY: isStatic ? 0 : translateY,
         cursor: onClick ? 'none' : undefined,
       }}
-      whileHover={!isStatic ? {
-        y: -4,
-        borderColor: 'rgba(200,168,124,0.45)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-      } : {}}
+      whileHover={{
+        y: -6,
+        borderColor: '#c8a87c',
+        boxShadow:
+          '0 0 28px rgba(200,168,124,0.35), 0 12px 30px rgba(0,0,0,0.6)',
+        transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+      }}
       transition={{ duration: 0.2 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
