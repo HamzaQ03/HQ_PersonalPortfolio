@@ -1,5 +1,6 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import GlassCard from '@/components/ui/GlassCard'
@@ -169,7 +170,12 @@ function isInlinePreviewable(url: string): boolean {
 }
 
 function ReviewLetterModal({ review, onClose }: { review: Review | null; onClose: () => void }) {
-  return (
+  // Portal-mount flag — avoids SSR mismatch when the page first renders.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       {review && review.recommendation_letter_url && (
         <motion.div
@@ -178,10 +184,13 @@ function ReviewLetterModal({ review, onClose }: { review: Review | null; onClose
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           onClick={onClose}
+          // Portaled to document.body so the modal escapes the page wrapper's
+          // stacking context; zIndex 9000 keeps it above the nav (z-index 50)
+          // and any other overlay short of the cursor.
           style={{
             position: 'fixed', inset: 0,
             background: 'rgba(0,0,0,0.78)',
-            zIndex: 100,
+            zIndex: 9000,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
@@ -311,14 +320,20 @@ function ReviewLetterModal({ review, onClose }: { review: Review | null; onClose
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
 /* ── Preview Letter Modal ────────────────────────────── */
 
 function LetterModal({ mentor, onClose }: { mentor: Mentor | null; onClose: () => void }) {
-  return (
+  // Portal-mount flag — avoids SSR mismatch when the page first renders.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       {mentor && (
         <motion.div
@@ -327,10 +342,12 @@ function LetterModal({ mentor, onClose }: { mentor: Mentor | null; onClose: () =
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           onClick={onClose}
+          // Portaled to document.body so the modal escapes the page wrapper's
+          // stacking context; zIndex 9000 keeps it above the nav (z-index 50).
           style={{
             position: 'fixed', inset: 0,
             background: 'rgba(0,0,0,0.78)',
-            zIndex: 100,
+            zIndex: 9000,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
@@ -483,7 +500,8 @@ function LetterModal({ mentor, onClose }: { mentor: Mentor | null; onClose: () =
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
