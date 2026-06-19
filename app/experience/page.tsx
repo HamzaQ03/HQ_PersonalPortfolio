@@ -92,6 +92,11 @@ const roles = [
     location:    'Bethesda, MD',
     dates:       'June 2025 – Present',
     badge:       { label: 'CURRENT', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', color: '#22c55e' },
+    // Secondary badge slot — renders to the LEFT of the primary badge.
+    // Kept optional/nullable across all roles via the same `as ... | null`
+    // pattern used elsewhere so adding a second pill on one role doesn't
+    // break the inferred Role type for the rest.
+    extraBadge:  { label: 'FULL-TIME', bg: 'rgba(200,168,124,0.08)', border: 'rgba(200,168,124,0.25)', color: A } as { label: string; bg: string; border: string; color: string } | null,
     publication: null as string | null,
     logo:        '/TPS_Logo.png',
     logoAlt:     'Triple Point Security',
@@ -144,7 +149,8 @@ const roles = [
     subtext:     'FedHIVE Division',
     location:    'Alexandria, VA',
     dates:       'August 2024 – June 2025',
-    badge:       null as { label: string; bg: string; border: string; color: string } | null,
+    badge:       { label: 'FULL-TIME', bg: 'rgba(200,168,124,0.08)', border: 'rgba(200,168,124,0.25)', color: A },
+    extraBadge:  null as { label: string; bg: string; border: string; color: string } | null,
     publication: null as string | null,
     logo:        '/FedHIve logo.png',
     logoAlt:     'HRTec FedHIVE',
@@ -198,6 +204,7 @@ const roles = [
     location:    'Tysons Corner, VA',
     dates:       'June 2024 – August 2024',
     badge:       { label: 'INTERNSHIP', bg: 'rgba(200,168,124,0.08)', border: 'rgba(200,168,124,0.25)', color: A },
+    extraBadge:  null as { label: string; bg: string; border: string; color: string } | null,
     publication: null as string | null,
     logo:        '/Bakertilly logo.png',
     logoAlt:     'Baker Tilly US, LLP',
@@ -246,6 +253,7 @@ const roles = [
     location:    'Alexandria, VA',
     dates:       'October 2023 – June 2024',
     badge:       { label: 'INTERNSHIP', bg: 'rgba(200,168,124,0.08)', border: 'rgba(200,168,124,0.25)', color: A },
+    extraBadge:  null as { label: string; bg: string; border: string; color: string } | null,
     publication: null as string | null,
     logo:        '/HRTEC Logo.png',
     logoAlt:     'HRTec',
@@ -294,6 +302,7 @@ const roles = [
     location:    'Blacksburg, VA',
     dates:       'January 2023 – May 2023',
     badge:       { label: 'PART-TIME', bg: 'rgba(200,168,124,0.08)', border: 'rgba(200,168,124,0.25)', color: A },
+    extraBadge:  null as { label: string; bg: string; border: string; color: string } | null,
     publication: null as string | null,
     logo:        '/VT Logo.png',
     logoAlt:     'Virginia Tech',
@@ -337,6 +346,7 @@ const roles = [
     location:    'Bethesda, MD',
     dates:       'April 2020 – April 2021',
     badge:       { label: 'INTERNSHIP', bg: 'rgba(200,168,124,0.08)', border: 'rgba(200,168,124,0.25)', color: A },
+    extraBadge:  null as { label: string; bg: string; border: string; color: string } | null,
     publication: 'Publication: Tumor Suppressor Par-4' as string | null,
     logo:        '/NIH_Logo.png',
     logoAlt:     'NIH',
@@ -491,7 +501,12 @@ function CardFaceContent({
                 color: T, margin: 0,
               }}>{role.title}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                {role.badge && <Badge b={role.badge} />}
+                {(role.badge || role.extraBadge) && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {role.extraBadge && <Badge b={role.extraBadge} />}
+                    {role.badge && <Badge b={role.badge} />}
+                  </div>
+                )}
                 <span style={{ fontFamily: 'monospace', fontSize: 11, color: A }}>
                   {role.dates}
                 </span>
@@ -631,9 +646,10 @@ function ExpModal({
 
                 {/* Role info */}
                 <div>
-                  {role.badge && (
-                    <div style={{ marginBottom: 8 }}>
-                      <Badge b={role.badge} />
+                  {(role.badge || role.extraBadge) && (
+                    <div style={{ marginBottom: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {role.extraBadge && <Badge b={role.extraBadge} />}
+                      {role.badge && <Badge b={role.badge} />}
                     </div>
                   )}
                   <h3 style={{

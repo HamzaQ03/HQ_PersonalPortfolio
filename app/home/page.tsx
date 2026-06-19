@@ -18,20 +18,21 @@ export default function HomePage() {
     return () => clearTimeout(t1)
   }, [])
 
-  // Lock document scrolling while the home page is mounted. Saves the
-  // previous html/body overflow values and restores them on unmount,
-  // so navigating to /experience or any other page leaves their own
-  // scroll behavior untouched.
+  // Lock document scrolling while the home page is mounted, then unconditionally
+  // clear the lock on unmount. We intentionally don't snapshot the *previous*
+  // overflow value to restore — when this effect runs the splash overlay has
+  // already set body.overflow = 'hidden' for its own scroll lock, so capturing
+  // it would persist 'hidden' after splash dismissal and propagate to every
+  // page the user navigates to next (Skills, Reviews, etc.), permanently
+  // blocking trackpad scroll. Forcing the cleanup to '' is correct because
+  // no other route in the app wants the body scroll-locked.
   useEffect(() => {
-    const originalHtmlOverflow = document.documentElement.style.overflow
-    const originalBodyOverflow = document.body.style.overflow
-
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
 
     return () => {
-      document.documentElement.style.overflow = originalHtmlOverflow
-      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
     }
   }, [])
 

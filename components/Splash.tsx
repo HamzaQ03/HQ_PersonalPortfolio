@@ -328,7 +328,7 @@ export default function Splash() {
               maskRepeat: 'no-repeat',
               WebkitMaskRepeat: 'no-repeat',
               animation:
-                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.3s both',
+                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.15s both',
               willChange: 'mask-position',
               backfaceVisibility: 'hidden',
             }}
@@ -352,7 +352,7 @@ export default function Splash() {
             }}
           >
             <path
-              d="M 300 25 Q 550 18 800 14"
+              d="M 300 25 Q 575 17 850 13"
               stroke="#ffffff"
               strokeWidth="3"
               strokeLinecap="round"
@@ -361,20 +361,20 @@ export default function Splash() {
                 strokeDasharray: 1200,
                 strokeDashoffset: 1200,
                 animation:
-                  'splashUnderlineDraw 1.0s ease-out 5.5s forwards',
+                  'splashUnderlineDraw 1.0s ease-out 5.15s forwards',
                 willChange: 'stroke-dashoffset',
               }}
             />
             <circle
-              cx="870"
-              cy="12"
+              cx="890"
+              cy="11"
               r="6"
               fill="#ffffff"
               style={{
                 opacity: 0,
-                transformOrigin: '870px 12px',
+                transformOrigin: '890px 11px',
                 animation:
-                  'splashDotLand 0.4s ease-out 6.5s forwards',
+                  'splashDotLand 0.4s ease-out 6.15s forwards',
                 willChange: 'transform, opacity',
               }}
             />
