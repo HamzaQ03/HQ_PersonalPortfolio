@@ -75,7 +75,7 @@ const MENTORS = [
     title:      'Senior Project Manager',
     company:    'Triple Point Security (NIH Contract)',
     connection: 'Mentor',
-    quote:      'Love the guy but he might just steal my job one of these days.',
+    quote:      'Hamza has been instrumental in strengthening NIH\'s cybersecurity and compliance posture during a critical phase of its IT modernization initiative. He brings a blend of technical excellence, leadership maturity, and intellectual curiosity that will make him an asset to any organization.',
   },
   {
     name:       'Hannah Schonfeld',
@@ -93,7 +93,7 @@ const MENTORS = [
     title:      'Senior Project Manager',
     company:    'Triple Point Security (NIH Contract)',
     connection: 'Colleague / Peer',
-    quote:      'Derick might be right, I\'m lowkey scared myself.',
+    quote:      'Review coming soon.',
   },
   {
     name:       'Robert Wilkinson',
@@ -415,13 +415,47 @@ function LetterModal({ mentor, onClose }: { mentor: Mentor | null; onClose: () =
                   HRTec / FedHIVE
                 </p>
               </div>
+            ) : mentor.slug === 'derick-sogbor' ? (
+              <div style={{
+                fontFamily: 'Inter, sans-serif', fontSize: 14,
+                color: '#e0e0e0', lineHeight: 1.8,
+                marginTop: 0,
+              }}>
+                <p style={{ marginTop: 0, marginBottom: 16 }}>
+                  To Whom It May Concern,
+                </p>
+                <p style={{ marginBottom: 16 }}>
+                  It is my pleasure to write this letter of recommendation for Hamza Qureshi, who has served as a Senior Consultant and Assistant Project Manager supporting the National Institutes of Health (NIH) IT Modernization Project under my supervision at Triple Point Security. During his tenure, Hamza has demonstrated exceptional professionalism, technical depth, and leadership that have made him an invaluable member of our team and a trusted contributor to our client&apos;s mission.
+                </p>
+                <p style={{ marginBottom: 16 }}>
+                  Hamza has been instrumental in strengthening NIH&apos;s cybersecurity and compliance posture during a critical phase of its IT modernization initiative. He co-led the development of continuous monitoring strategies that enhanced enterprise-wide risk visibility, provided key leadership in the implementation of NIH&apos;s GRC platform and GRC tool (JCAM) to streamline compliance and improve audit readiness, and managed multiple modernization projects, ensuring alignment with federal security mandates and the successful delivery of mission-critical milestones.
+                </p>
+                <p style={{ marginBottom: 16 }}>
+                  In addition to his technical expertise, Hamza has consistently demonstrated exceptional leadership and communication skills. He has successfully coordinated efforts across cross-functional teams, balancing technical requirements with stakeholder expectations to deliver results that align with NIH&apos;s strategic objectives. His ability to clearly communicate complex cybersecurity issues to both technical and non-technical audiences has strengthened trust with senior leadership and ensured that projects maintained momentum even under tight deadlines.
+                </p>
+                <p style={{ marginBottom: 16 }}>
+                  Beyond his technical contributions, Hamza stands out for his collaborative spirit, attention to detail, and strong work ethic. He approaches challenges with creativity and composure, consistently exceeding expectations and elevating team performance. His passion for cybersecurity and continuous learning makes him a standout professional poised for continued success.
+                </p>
+                <p style={{ marginBottom: 16 }}>
+                  I have no hesitation in recommending Hamza for any future professional opportunity he may pursue. He brings a blend of technical excellence, leadership maturity, and intellectual curiosity that will make him an asset to any organization.
+                </p>
+                <p style={{ marginBottom: 16 }}>
+                  Sincerely,
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  Derick Sogbor<br />
+                  Project Manager (PMP, CISM, AWS-CSA)<br />
+                  National Institutes of Health, HHS<br />
+                  Contractor via Triple Point Security
+                </p>
+              </div>
             ) : (
               <p style={{
                 fontFamily: 'Inter, sans-serif', fontSize: 14,
                 color: '#e0e0e0', lineHeight: 1.8,
                 marginTop: 0,
               }}>
-                {'// TODO — Paste full recommendation letter text here once received from this mentor'}
+                Recommendation letter coming soon.
               </p>
             )}
 
@@ -431,6 +465,8 @@ function LetterModal({ mentor, onClose }: { mentor: Mentor | null; onClose: () =
                 playClickSound()
                 if (mentor.slug === 'robert-wilkinson') {
                   window.open('/letters/Robert_Wilkinson_Recommendation_Letter.pdf', '_blank')
+                } else if (mentor.slug === 'derick-sogbor') {
+                  window.open('/letters/Derick_Sogbor_Recommendation_Letter.pdf', '_blank')
                 } else {
                   alert('Letter coming soon')
                 }
