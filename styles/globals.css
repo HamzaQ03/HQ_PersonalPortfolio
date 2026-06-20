@@ -235,30 +235,40 @@ section { scroll-margin-top: 80px; }
   border: none !important;
 }
 
-/* ─── Cinematic home page reveal (synchronized with splash fade-out) ─── */
+/* ─── Cinematic home page reveal (synchronized with splash fade-out) ───
+   The blur+scale entrance animation that used to live here was getting
+   stuck at currentTime: 0 — the browser never advanced it, leaving the
+   home page locked at opacity 0 (the keyframe 0% state) under the splash
+   overlay. On Vercel that produced a solid-black screen after the splash
+   faded out (body background is #000). The splash's own fade-out already
+   provides a smooth cinematic entrance to /home, so the page-level
+   animation is unnecessary; removing it eliminates the failure mode
+   without sacrificing the experience. */
 .home-page-reveal {
-  animation: homePageFocusReveal 1.4s
-             cubic-bezier(0.22, 0.61, 0.36, 1)
-             forwards;
-  /* GPU acceleration hints */
-  will-change: transform, opacity, filter;
+  opacity: 1;
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
-@keyframes homePageFocusReveal {
-  0% {
+/* ─── Connect page — graduation tassel swing on card hover ──────── */
+@keyframes gradTasselSwing {
+  0%   { transform: rotate(0deg); }
+  18%  { transform: rotate(-14deg); }
+  35%  { transform: rotate(10deg); }
+  52%  { transform: rotate(-6deg); }
+  70%  { transform: rotate(4deg); }
+  85%  { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ─── Certifications page — inline PDF preview modal fade-in ───── */
+@keyframes pdfModalFadeIn {
+  from {
     opacity: 0;
-    transform: scale(1.08) translateY(12px);
-    filter: blur(8px);
+    transform: scale(0.98);
   }
-  40% {
-    opacity: 0.4;
-    filter: blur(4px);
-  }
-  100% {
+  to {
     opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+    transform: scale(1);
   }
 }

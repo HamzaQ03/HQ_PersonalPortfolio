@@ -45,6 +45,14 @@ export default function Splash() {
   const [mounted, setMounted] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
+  // Drive the fade-out in state so the CSS keyframe animation isn't a
+  // single point of failure. Same stuck-at-currentTime-0 class of bug
+  // we just hit on the home-page-reveal CSS animation: if the browser
+  // never advances the splash CSS keyframe, the overlay stays solid
+  // black until splashDone unmounts it — and any glitch in unmount
+  // timing leaves a residual black frame. A JS-driven opacity is
+  // guaranteed to take effect since it's just an inline style write.
+  const [overlayOpacity, setOverlayOpacity] = useState(1)
   const videoRef = useRef<HTMLVideoElement>(null)
   // Stash the router in a ref so the mount/unmount effect below
   // doesn't have to take `router` as a dep. If `useRouter()` were
@@ -67,11 +75,15 @@ export default function Splash() {
     // Lock body scroll while splash is visible
     document.body.style.overflow = 'hidden'
 
-    // Fallback: force the signature composition to mount even if
-    // `canPlayThrough` never fires on this device.
+    // Hold the blur + signature offscreen for 2.5s so the user gets
+    // a clean view of the city video first. After 2.5s, videoReady
+    // flips true → blur fades in (0.5s) and the signature mask reveal
+    // begins (5s after a 0.15s pre-roll). canPlayThrough on the video
+    // is intentionally NOT wired up here so the 2.5s minimum hold is
+    // guaranteed even on fast connections.
     const videoFallback = setTimeout(() => {
       setVideoReady(true)
-    }, 1500)
+    }, 2500)
 
     // Navigate to /home behind the overlay so it is loaded and
     // rendered underneath well before the Phase 6 fade-out.
@@ -79,89 +91,41 @@ export default function Splash() {
       routerRef.current.push('/home')
     }, 300)
 
-    // Total splash duration: 8.5s (7.3s fade-out start + 1.2s fade).
-    // Also re-push /home as a safety net — Next.js no-ops if we're
-    // already there, but if the 300ms push got eaten by a render
-    // race this guarantees the user reaches /home before we unmount.
+    // Timeline after the 2.5s pre-roll:
+    //   2.5s   blur + signature mount
+    //   2.65s  signature mask reveal begins (5s)
+    //   7.65s  signature complete, underline starts (1s)
+    //   8.65s  underline complete, dot lands (0.4s)
+    //   9.05s  dot landed → 0.55s dramatic pause
+    //   9.6s   splash fade-out begins (1.2s)
+    //   10.8s  splash unmounts, /home visible
+    const fadeStartTimer = setTimeout(() => {
+      setOverlayOpacity(0)
+    }, 9800)
+
     const doneTimer = setTimeout(() => {
       document.body.style.overflow = ''
       routerRef.current.push('/home')
       setSplashDone(true)
-    }, 8500)
+    }, 11000)
 
     return () => {
       clearTimeout(videoFallback)
       clearTimeout(navTimer)
+      clearTimeout(fadeStartTimer)
       clearTimeout(doneTimer)
       document.body.style.overflow = ''
     }
   }, [mounted])
 
-  // Reverse-loop playback. Plays forward to the end, then steps
-  // backward through frames via requestAnimationFrame, then forward
-  // again — eliminates the "loop snap" of a hard restart since the
-  // city camera ends in a different position than it starts.
-  useEffect(() => {
-    if (!mounted) return
-
-    const video = videoRef.current
-    if (!video) return
-
-    let direction: 1 | -1 = 1
-    let rafId: number | null = null
-
-    // Step backward one frame's worth of duration per render frame,
-    // matching the source video's 24fps frame rate.
-    const REVERSE_STEP_PER_FRAME = 1 / 24
-
-    const tick = () => {
-      if (!video) return
-
-      if (direction === 1) {
-        // Forward — native browser playback. Intervene only at the
-        // tail end of the clip.
-        if (video.currentTime >= video.duration - 0.05) {
-          direction = -1
-          video.pause()
-        }
-      } else {
-        // Reverse — browsers can't natively play backward, so step
-        // currentTime backward manually on every render frame.
-        const newTime = video.currentTime - REVERSE_STEP_PER_FRAME
-        if (newTime <= 0.05) {
-          direction = 1
-          video.currentTime = 0
-          video.play().catch(() => {
-            // autoplay may be blocked — ignore
-          })
-        } else {
-          video.currentTime = newTime
-        }
-      }
-
-      rafId = requestAnimationFrame(tick)
-    }
-
-    const startTicking = () => {
-      if (rafId === null) {
-        rafId = requestAnimationFrame(tick)
-      }
-    }
-
-    if (video.readyState >= 3) {
-      startTicking()
-    } else {
-      video.addEventListener('canplay', startTicking, { once: true })
-    }
-
-    return () => {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId)
-        rafId = null
-      }
-      video.removeEventListener('canplay', startTicking)
-    }
-  }, [mounted])
+  // Note on video playback: the previous reverse-loop trick (forward
+  // play, then step currentTime backward via rAF every animation
+  // frame) was the source of the splash lag — manually seeking the
+  // video each tick forces the browser to decode the previous frame
+  // and re-paint on every rAF call, which is brutally expensive even
+  // on mid-tier GPUs. Replaced with a native `loop` attribute on the
+  // <video> element. Small "loop snap" cosmetic trade-off in exchange
+  // for buttery smooth playback throughout the splash.
 
   if (!mounted || splashDone) return null
 
@@ -174,7 +138,10 @@ export default function Splash() {
         backgroundColor: '#000000',
         overflow: 'hidden',
         cursor: 'none',
-        animation: 'splashFadeOut 1.2s ease-in-out 7.3s forwards',
+        // JS-driven fade instead of a CSS keyframe — see the
+        // overlayOpacity state comment in the component for context.
+        opacity: overlayOpacity,
+        transition: 'opacity 1.2s ease-in-out',
       }}
       aria-hidden="true"
     >
@@ -213,17 +180,33 @@ export default function Splash() {
           70%  { opacity: 1; transform: scale(1.15); }
           100% { opacity: 1; transform: scale(1); }
         }
+        /* Full-screen backdrop blur fades in just before the signature
+           starts tracing, then stays through the signature, underline,
+           and dot reveal. Fades out with the splash overlay at 7.3s. */
+        @keyframes splashBlurFadeIn {
+          0%   { opacity: 0; }
+          100% { opacity: 1; }
+        }
       `}</style>
 
-      {/* Cinematic city video background */}
+      {/* Cinematic city video background.
+          Render the <video> with NOTHING that pushes it onto a separate
+          GPU compositing layer. The previous setup combined
+          filter: brightness(...), transform: translateZ(0), willChange,
+          and backface-visibility — which together force the browser to
+          decode the video to a GPU texture and then composite, and that
+          texture gets resampled at a quality noticeably below the
+          source on most displays (looks soft / muddy compared to the
+          same file in a native player). Plain video, no filter, no
+          transform = direct decode straight to the screen. */}
       <video
         ref={videoRef}
         src="/City_Night_AI2.mp4"
         autoPlay
+        loop
         muted
         playsInline
         preload="auto"
-        onCanPlayThrough={() => setVideoReady(true)}
         aria-hidden="true"
         style={{
           position: 'absolute',
@@ -232,46 +215,48 @@ export default function Splash() {
           height: '100%',
           objectFit: 'cover',
           objectPosition: 'center',
-          // Brightness drop instead of blur — much cheaper per
-          // frame, the largest GPU saving in this pass.
-          filter: 'brightness(0.7)',
           opacity: 0,
           animation: 'splashBgFadeIn 0.6s ease-out forwards',
-          willChange: 'opacity',
-          transform: 'translateZ(0)',
-          backfaceVisibility: 'hidden',
           pointerEvents: 'none',
         }}
       />
 
-      {/* Soft dark radial overlay — gives the white signature
-          contrast against bright spots in the city footage. */}
+      {/* Dim overlay for signature contrast — fades in at the 2.5s
+          mark to dim the city video so the white signature reads
+          clearly. Uses opacity only (single composite op per frame,
+          near-zero GPU cost). Replaced the previous filter: blur on
+          the video, which forced a blur shader to run on every video
+          frame and was the root cause of the splash playback lag. */}
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
-          background:
-            'radial-gradient(ellipse at center, ' +
-            'rgba(0,0,0,0.25) 0%, ' +
-            'rgba(0,0,0,0.55) 70%, ' +
-            'rgba(0,0,0,0.75) 100%)',
-          opacity: 0,
-          animation: 'splashBgFadeIn 0.6s ease-out forwards',
+          backgroundColor: 'rgba(0, 0, 0, 0.55)',
+          opacity: videoReady ? 1 : 0,
+          transition: 'opacity 0.3s ease-out',
           pointerEvents: 'none',
-          transform: 'translateZ(0)',
+          zIndex: 5,
         }}
       />
 
-      {/* Signature composition — only mounts once the video can
-          play through (or the 1.5s fallback fires). Large and
-          centered; reveal is a sliding mask, not a clip-path. */}
+
+
+
+      {/* Signature composition + the full-screen backdrop blur layer
+          — both mount once the video can play through (or the 1.5s
+          fallback fires). The blur fades in over 0.5s while the
+          signature SVG sits in its 0.15s pre-roll, so by the time
+          the signature begins tracing the blur is fully in. The blur
+          stays through the entire reveal and fades out with the
+          splash overlay at 7.3s. */}
       {videoReady && (
         <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%) translateZ(0)',
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%) translateZ(0)',
             // Signature spans most of the viewport — large and
             // dramatic, no nameplate frame.
             width: 'min(80vw, 1200px)',
@@ -286,14 +271,9 @@ export default function Splash() {
             backfaceVisibility: 'hidden',
           }}
         >
-          {/* Signature with CSS mask-image gradient reveal. The
-              mask lives as a property on the signature SVG itself
-              — no separate overlay element — so nothing visually
-              occludes the city video underneath. The mask gradient
-              is 400% wide with a soft black-to-transparent edge;
-              mask-position animates from 100% (fully masked) to 0%
-              (fully revealed), sweeping the soft edge across the
-              signature. */}
+          {/* Signature SVG — clean fill, no aura, no bold stroke.
+              The full-screen backdrop blur (sibling element below)
+              provides the contrast against the city video. */}
           <svg
             viewBox={`0 0 ${SIGNATURE_VB_W} ${SIGNATURE_VB_H}`}
             preserveAspectRatio="xMidYMid meet"
@@ -315,20 +295,12 @@ export default function Splash() {
                 'transparent 100%)',
               maskSize: '400% 100%',
               WebkitMaskSize: '400% 100%',
-              // Base value matches the animation END state ("revealed").
-              // The animation's keyframe 0% explicitly resets it to the
-              // hidden state during the play window. Using `both` fill
-              // mode means the keyframe 0% value (hidden) also covers
-              // the 0.3s delay, so the signature doesn't flash visible
-              // before the reveal starts. If the animation is ever
-              // released by the browser, the base value (revealed) is
-              // what persists — the signature can't vanish.
               maskPosition: '0% 0%',
               WebkitMaskPosition: '0% 0%',
               maskRepeat: 'no-repeat',
               WebkitMaskRepeat: 'no-repeat',
               animation:
-                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.15s both',
+                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.2s both',
               willChange: 'mask-position',
               backfaceVisibility: 'hidden',
             }}
@@ -340,7 +312,7 @@ export default function Splash() {
             />
           </svg>
 
-          {/* Underline + dot below the signature */}
+          {/* Underline + dot below the signature — clean white. */}
           <svg
             viewBox="0 0 1000 50"
             preserveAspectRatio="xMidYMid meet"
@@ -361,7 +333,7 @@ export default function Splash() {
                 strokeDasharray: 1200,
                 strokeDashoffset: 1200,
                 animation:
-                  'splashUnderlineDraw 1.0s ease-out 5.15s forwards',
+                  'splashUnderlineDraw 1.0s ease-out 5.2s forwards',
                 willChange: 'stroke-dashoffset',
               }}
             />
@@ -374,7 +346,7 @@ export default function Splash() {
                 opacity: 0,
                 transformOrigin: '890px 11px',
                 animation:
-                  'splashDotLand 0.4s ease-out 6.15s forwards',
+                  'splashDotLand 0.4s ease-out 6.2s forwards',
                 willChange: 'transform, opacity',
               }}
             />

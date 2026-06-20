@@ -563,20 +563,89 @@ function BookmarkCard({ number, name, subtitle, onClick }: BookmarkCardProps) {
         </span>
       </button>
 
-      {/* ── Tapered gold inkdrop ── */}
-      <svg
-        width="110"
-        height="60"
-        viewBox="0 0 110 60"
-        style={{ display: 'block', marginTop: '-2px', pointerEvents: 'none' }}
+      {/* ── Animated graduation tassel ── */}
+      <div
         aria-hidden="true"
+        style={{
+          width: 110,
+          height: 64,
+          position: 'relative',
+          marginTop: '-2px',
+          pointerEvents: 'none',
+          overflow: 'visible',
+        }}
       >
-        <path
-          d="M 50 0 Q 55 30 55 50 Q 55 30 60 0"
-          fill="#1a1410"
-          opacity="0.9"
-        />
-      </svg>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            marginLeft: -12,
+            width: 24,
+            height: '100%',
+            transformOrigin: '50% 0%',
+            animation: hovered ? 'gradTasselSwing 1.6s ease-out' : 'none',
+          }}
+        >
+          {/* Black hex mortarboard cap */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 14,
+            height: 5,
+            background: '#1a1a1a',
+            borderRadius: 1,
+            zIndex: 2,
+          }} />
+
+          {/* Braided gold cord */}
+          <div style={{
+            position: 'absolute',
+            top: 5,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 4,
+            height: 24,
+            background: 'repeating-linear-gradient(135deg, #b8941f 0px, #b8941f 1.5px, #d4af37 1.5px, #d4af37 3px, #8b6f17 3px, #8b6f17 4.5px)',
+            borderRadius: 2,
+          }} />
+
+          {/* Flared braided head */}
+          <div style={{
+            position: 'absolute',
+            top: 28,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 14,
+            height: 9,
+            background: 'repeating-linear-gradient(90deg, #b8941f 0px, #b8941f 1px, #d4af37 1px, #d4af37 2px, #8b6f17 2px, #8b6f17 3px)',
+            borderRadius: '50% 50% 30% 30% / 60% 60% 40% 40%',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+          }} />
+
+          {/* 6 fanned strands */}
+          <div style={{ position: 'absolute', top: 36, left: 4, width: 1, height: 22, background: 'linear-gradient(180deg, #b8941f 0%, #d4af37 50%, #8b6f17 100%)', transform: 'rotate(-4deg)', transformOrigin: 'top center' }}>
+            <div style={{ position: 'absolute', bottom: -2, left: -1, width: 3, height: 4, background: '#8b6f17', borderRadius: '50%' }} />
+          </div>
+          <div style={{ position: 'absolute', top: 36, left: 7, width: 1, height: 26, background: 'linear-gradient(180deg, #b8941f 0%, #d4af37 50%, #8b6f17 100%)', transform: 'rotate(-2deg)', transformOrigin: 'top center' }}>
+            <div style={{ position: 'absolute', bottom: -2, left: -1, width: 3, height: 4, background: '#8b6f17', borderRadius: '50%' }} />
+          </div>
+          <div style={{ position: 'absolute', top: 36, left: 10, width: 1, height: 28, background: 'linear-gradient(180deg, #b8941f 0%, #d4af37 50%, #8b6f17 100%)', transform: 'rotate(0deg)', transformOrigin: 'top center' }}>
+            <div style={{ position: 'absolute', bottom: -2, left: -1, width: 3, height: 4, background: '#8b6f17', borderRadius: '50%' }} />
+          </div>
+          <div style={{ position: 'absolute', top: 36, left: 13, width: 1, height: 27, background: 'linear-gradient(180deg, #b8941f 0%, #d4af37 50%, #8b6f17 100%)', transform: 'rotate(1deg)', transformOrigin: 'top center' }}>
+            <div style={{ position: 'absolute', bottom: -2, left: -1, width: 3, height: 4, background: '#8b6f17', borderRadius: '50%' }} />
+          </div>
+          <div style={{ position: 'absolute', top: 36, left: 16, width: 1, height: 25, background: 'linear-gradient(180deg, #b8941f 0%, #d4af37 50%, #8b6f17 100%)', transform: 'rotate(3deg)', transformOrigin: 'top center' }}>
+            <div style={{ position: 'absolute', bottom: -2, left: -1, width: 3, height: 4, background: '#8b6f17', borderRadius: '50%' }} />
+          </div>
+          <div style={{ position: 'absolute', top: 36, left: 19, width: 1, height: 22, background: 'linear-gradient(180deg, #b8941f 0%, #d4af37 50%, #8b6f17 100%)', transform: 'rotate(5deg)', transformOrigin: 'top center' }}>
+            <div style={{ position: 'absolute', bottom: -2, left: -1, width: 3, height: 4, background: '#8b6f17', borderRadius: '50%' }} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

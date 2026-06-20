@@ -99,6 +99,45 @@ export default function CertLogo({
     )
   }
 
+  // Google Project Management
+  if (
+    lowerCert.includes('google project management') ||
+    lowerCert.includes('google pm') ||
+    (lowerIssuer === 'google' && lowerCert.includes('project'))
+  ) {
+    return (
+      <div style={wrapStyle(size)}>
+        <Image
+          src="/Google%20logo.jpeg"
+          alt="Google"
+          width={size}
+          height={size}
+          style={{ objectFit: 'contain', maxWidth: size, maxHeight: size }}
+        />
+      </div>
+    )
+  }
+
+  // PMP / PMI
+  if (
+    lowerCert.includes('pmp') ||
+    lowerCert.includes('project management professional') ||
+    lowerIssuer.includes('project management institute') ||
+    lowerIssuer.includes('pmi')
+  ) {
+    return (
+      <div style={wrapStyle(size)}>
+        <Image
+          src="/PMP-PMI-%20Logo.png"
+          alt="PMP / PMI"
+          width={size}
+          height={size}
+          style={{ objectFit: 'contain', maxWidth: size, maxHeight: size }}
+        />
+      </div>
+    )
+  }
+
   // ── SIMPLE-ICONS LOGOS ───────────────────────────────────
 
   // Microsoft / Azure — four-square inline SVG

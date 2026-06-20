@@ -1,6 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import DotSideNav from '@/components/DotSideNav'
@@ -8,41 +7,30 @@ import CustomCursor from '@/components/CustomCursor'
 import SpotlightOverlay from '@/components/SpotlightOverlay'
 import PageTransition from '@/components/PageTransition'
 import VisitTracker from '@/components/VisitTracker'
-import { splashState } from '@/lib/splashState'
 
 const HamzasIntel = dynamic(() => import('@/components/HamzasIntel'), { ssr: false })
 
 export default function ShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname    = usePathname()
-  const router      = useRouter()
   const isSplash    = pathname === '/'
   const isDashboard = pathname === '/dashboard'
   const showShell   = !isSplash && !isDashboard
 
-  // Gate: if an inner page is loaded directly (hard refresh) before the splash
-  // has been completed this session, redirect silently to /.
-  const needsGate = !isSplash && !isDashboard && !splashState.shown
-
-  useEffect(() => {
-    if (needsGate) {
-      router.replace('/')
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // The hard-refresh redirect gate used to live here as a fixed black
+  // overlay that would briefly cover the page until the useEffect
+  // redirected the user to /. The gate relied on `splashState.shown`
+  // (read from localStorage at render time), which returns false during
+  // SSR because localStorage doesn't exist server-side — so the gate
+  // would render in the HTML payload, get hydrated, and then never
+  // properly clear because React had no state dependency to trigger a
+  // re-render when the client-side value flipped to true. End result:
+  // a permanent black overlay covering the page after every refresh.
+  // The Splash component now handles the equivalent logic correctly:
+  // it short-circuits to splashDone on refresh and only plays for the
+  // first-ever visit. The gate is gone.
 
   return (
     <>
-      {/* Black gate — only visible while still on the inner page, clears the
-          instant pathname becomes '/' after the redirect */}
-      {needsGate && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: '#000000',
-          zIndex: 99999,
-          pointerEvents: 'none',
-        }} />
-      )}
-
       <CustomCursor />
       <SpotlightOverlay />
       <PageTransition />

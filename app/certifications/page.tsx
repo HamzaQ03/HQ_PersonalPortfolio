@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import GlassCard from '@/components/ui/GlassCard'
 import CertLogo from '@/components/CertLogo'
@@ -15,45 +15,67 @@ const TM = '#666677'
 
 /* ── Data ─────────────────────────────────────────────── */
 
-const activeCerts = [
+const activeCerts: {
+  name: string
+  code: string | null
+  issuer: string
+  period: string
+  pdfUrl: string | null
+}[] = [
   {
     name:   'CompTIA Security+',
     code:   'SY0-701',
     issuer: 'CompTIA',
     period: 'May 2026 – Present',
+    pdfUrl: '/Certificates/CompTIA%20Security%2B%20ce%20certificate%20-%20HQ%20-%20Certificate.pdf',
   },
   {
     name:   'AWS Solutions Architect',
     code:   'SAA-C03',
     issuer: 'Amazon Web Services (AWS)',
     period: 'February 2026 – Present',
+    pdfUrl: '/Certificates/AWS%20Certified%20Solutions%20Architect%20-%20HQ-%20Certificate.pdf',
   },
   {
     name:   'Microsoft Azure Administrator',
     code:   'AZ-104',
     issuer: 'Microsoft',
     period: 'April 2026 – Present',
+    pdfUrl: '/Certificates/AZZURE-104-HQ-Certificate.pdf',
+  },
+  {
+    name:    'Google Project Management Professional Certificate',
+    code:    null,
+    issuer:  'Google',
+    period:  'June 2026 – Present',
+    pdfUrl:  null,
   },
 ]
 
 const inProgressCerts = [
   {
+    name:     'Project Management Professional',
+    code:     'PMP',
+    issuer:   'Project Management Institute (PMI)',
+    expected: 'August 2026',
+  },
+  {
     name:     'Certified Information Systems Auditor',
     code:     'CISA',
     issuer:   'ISACA',
-    expected: 'August 2026',
+    expected: 'November 2026',
   },
   {
     name:     'Certified Information Security Manager',
     code:     'CISM',
     issuer:   'ISACA',
-    expected: 'December 2026',
+    expected: 'February 2027',
   },
   {
     name:     'Certified Cloud Security Professional',
     code:     'CCSP',
     issuer:   'ISC²',
-    expected: 'April 2027',
+    expected: 'May 2027',
   },
 ]
 
@@ -94,7 +116,15 @@ function InProgressBadge() {
 
 /* ── Modal ───────────────────────────────────────────── */
 
-function CertModal({ data, onClose }: { data: ModalData | null; onClose: () => void }) {
+function CertModal({
+  data,
+  onClose,
+  onPdfPreview,
+}: {
+  data: ModalData | null
+  onClose: () => void
+  onPdfPreview: (url: string, name: string) => void
+}) {
   return (
     <AnimatePresence>
       {data && (
@@ -182,14 +212,20 @@ function CertModal({ data, onClose }: { data: ModalData | null; onClose: () => v
                         {c.name}
                       </h3>
                       <p style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
-                        Code: {c.code} · Issuer: {c.issuer} · Period: {c.period}
+                        {c.code ? `Code: ${c.code} · ` : ''}Issuer: {c.issuer} · Period: {c.period}
                       </p>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: '0 0 20px' }}>
                         {'// TODO — Write your personal description here: Describe why you pursued this certification, what you learned during the process, and how you apply these skills in your GRC and A&A work professionally.'}
                       </p>
-                      {/* TODO — Replace alert with: window.open('/certificates/CERTNAME.pdf', '_blank') */}
                       <button
-                        onClick={() => alert('Certificate coming soon')}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (c.pdfUrl) {
+                            onPdfPreview(c.pdfUrl, c.name)
+                          } else {
+                            alert('Certificate coming soon')
+                          }
+                        }}
                         style={{
                           fontFamily: 'monospace', fontSize: 10, letterSpacing: 1,
                           border: '1px solid rgba(200,168,124,0.4)', color: A,
@@ -239,7 +275,26 @@ function CertModal({ data, onClose }: { data: ModalData | null; onClose: () => v
 
 export default function CertificationsPage() {
   const [modal, setModal]       = useState<ModalData | null>(null)
+  const [pdfModal, setPdfModal] = useState<{ url: string; name: string } | null>(null)
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!pdfModal) return
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPdfModal(null)
+    }
+
+    document.addEventListener('keydown', onKey)
+
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [pdfModal])
 
   return (
     <div className="min-h-screen pt-28 pb-24 px-6 md:px-16 lg:px-24">
@@ -337,9 +392,15 @@ export default function CertificationsPage() {
                               {c.name}
                             </h3>
                             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: 8 }}>
-                              {/* TODO — Replace alert with: window.open('/certificates/CERTNAME.pdf', '_blank') */}
                               <button
-                                onClick={e => { e.stopPropagation(); alert('Certificate coming soon') }}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  if (c.pdfUrl) {
+                                    setPdfModal({ url: c.pdfUrl, name: c.name })
+                                  } else {
+                                    alert('Certificate coming soon')
+                                  }
+                                }}
                                 style={{
                                   fontFamily: 'monospace', fontSize: 10, letterSpacing: 1,
                                   border: '1px solid rgba(200,168,124,0.4)', color: A,
@@ -362,7 +423,7 @@ export default function CertificationsPage() {
 
                           {/* CHANGE 4: single-line details */}
                           <p className="font-mono text-xs" style={{ color: A, margin: 0 }}>
-                            Code: {c.code} · Issuer: {c.issuer} · Period: {c.period}
+                            {c.code ? `Code: ${c.code} · ` : ''}Issuer: {c.issuer} · Period: {c.period}
                           </p>
 
                         </div>
@@ -439,7 +500,125 @@ export default function CertificationsPage() {
       </div>
 
       {/* Modal */}
-      <CertModal data={modal} onClose={() => setModal(null)} />
+      <CertModal
+        data={modal}
+        onClose={() => setModal(null)}
+        onPdfPreview={(url, name) => setPdfModal({ url, name })}
+      />
+
+      {/* In-page PDF preview modal */}
+      {pdfModal && (
+        <div
+          onClick={() => setPdfModal(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '96px 24px 24px 24px',
+            animation: 'pdfModalFadeIn 200ms ease-out',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 1100,
+              height: 'calc(100vh - 120px)',
+              maxHeight: '88vh',
+              background: '#0a0a0a',
+              border: '2px solid #c8a87c',
+              borderRadius: 8,
+              boxShadow: '0 24px 60px rgba(0,0,0,0.7), 0 0 40px rgba(200,168,124,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal header bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 20px',
+              borderBottom: '1px solid rgba(200,168,124,0.25)',
+              background: 'linear-gradient(180deg, rgba(200,168,124,0.08), transparent)',
+              flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  color: '#c8a87c',
+                  opacity: 0.7,
+                }}>
+                  CERTIFICATE PREVIEW
+                </span>
+                <span style={{
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  color: 'rgba(200,168,124,0.3)',
+                }}>
+                  ·
+                </span>
+                <span style={{
+                  fontFamily: 'var(--font-space-grotesk), sans-serif',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#f5e8d4',
+                }}>
+                  {pdfModal.name}
+                </span>
+              </div>
+              <button
+                onClick={() => setPdfModal(null)}
+                aria-label="Close certificate preview"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(200,168,124,0.4)',
+                  color: '#c8a87c',
+                  padding: '6px 12px',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  letterSpacing: 1,
+                  transition: 'all 200ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(200,168,124,0.1)'
+                  e.currentTarget.style.borderColor = '#c8a87c'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = 'rgba(200,168,124,0.4)'
+                }}
+              >
+                × CLOSE
+              </button>
+            </div>
+
+            {/* PDF iframe */}
+            <iframe
+              src={pdfModal.url}
+              title={`${pdfModal.name} certificate preview`}
+              style={{
+                flex: 1,
+                width: '100%',
+                border: 'none',
+                background: '#1a1a1a',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

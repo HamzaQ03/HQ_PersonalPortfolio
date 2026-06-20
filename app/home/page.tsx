@@ -41,14 +41,17 @@ export default function HomePage() {
       className="home-page-reveal"
       style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden' }}
     >
-      {/* ── White overlay — bridges vault white flash ── */}
-      <motion.div
-        aria-hidden="true"
-        style={{ position: 'fixed', inset: 0, background: '#ffffff', zIndex: 8000, pointerEvents: 'none' }}
-        initial={{ opacity: 1 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut', delay: 0.15 }}
-      />
+      {/* The "bridges vault white flash" overlay used to live here as a
+          full-screen white motion.div with initial: opacity 1 →
+          animate: opacity 0. On the Vercel production build the
+          framer-motion animation could fail to run (chunk-load race
+          during the splash → /home navigation, hydration timing), and
+          the white overlay would stay fully opaque on top of every
+          page element forever — which read on screen as a solid
+          blanket covering /home after the splash faded out. The
+          splash's own fade-out already provides the cinematic
+          transition; this overlay was redundant insurance that turned
+          into a failure mode. Removed. */}
 
       {/* ── Shockwave ring ── */}
       {showRing && (
@@ -68,8 +71,17 @@ export default function HomePage() {
         />
       )}
 
-      {/* ── Page — 100vh, no scroll ── */}
-      <motion.div
+      {/* ── Page — 100vh, no scroll ──
+          NOTE: The wrapper used to fade in via initial: opacity 0 →
+          animate: opacity 1, relying on framer-motion's animate to run
+          on mount. On the Vercel production build that animation could
+          race with the splash → /home navigation chunk-load and never
+          fire, leaving the entire home content stuck at opacity 0 —
+          which renders as a solid black screen after the splash fades
+          out (the body's background is #000). The splash's own
+          fade-out already provides the entrance animation, so the
+          wrapper just renders visible from the start now. */}
+      <div
         style={{
           height: '100vh',
           overflow: 'hidden',
@@ -77,9 +89,6 @@ export default function HomePage() {
           display: 'flex',
           flexDirection: 'column',
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut', delay: 0.2 }}
       >
         {/* ══ TOP SECTION — two columns ══════════════════════════════════ */}
         <div style={{
@@ -100,7 +109,7 @@ export default function HomePage() {
                 fontSize: 52, color: T,
                 lineHeight: 1.08, margin: '0 0 16px',
               }}
-              variants={fadeUp} initial="hidden" whileInView="visible" viewport={vp} transition={trans(0.08)}>
+              variants={fadeUp} initial="visible" animate="visible" viewport={vp} transition={trans(0.08)}>
               Hamza{' '}
               <span style={{ color: '#c8a87c' }}>Qureshi.</span>
             </motion.h1>
@@ -108,7 +117,7 @@ export default function HomePage() {
             {/* Thin rule */}
             <motion.div
               style={{ width: 60, height: 1, background: 'rgba(200,168,124,0.4)', margin: '0 0 16px' }}
-              variants={fadeUp} initial="hidden" whileInView="visible" viewport={vp} transition={trans(0.14)}
+              variants={fadeUp} initial="visible" animate="visible" viewport={vp} transition={trans(0.14)}
             />
 
             {/* ── Rotating roles — pure CSS, no hydration risk ── */}
@@ -135,7 +144,7 @@ export default function HomePage() {
             `}</style>
             <motion.div
               style={{ height: 32, overflow: 'hidden', position: 'relative' }}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              initial={{ opacity: 1 }} animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
             >
               <div className="roles-track">
@@ -199,7 +208,7 @@ export default function HomePage() {
                   lineHeight: 1.65,
                   margin:     '0 0 16px',
                 }}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
               >
@@ -216,7 +225,7 @@ export default function HomePage() {
                   lineHeight: 1.65,
                   margin:     '0 0 16px',
                 }}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: 'easeOut', delay: 0.7 }}
               >
@@ -235,7 +244,7 @@ export default function HomePage() {
                   lineHeight: 1.65,
                   margin:     0,
                 }}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: 'easeOut', delay: 1.2 }}
               >
@@ -254,7 +263,7 @@ export default function HomePage() {
             position: 'relative',
             display: 'block',
           }}
-          variants={fadeUp} initial="hidden" whileInView="visible" viewport={vp} transition={trans(0.3)}>
+          variants={fadeUp} initial="visible" animate="visible" viewport={vp} transition={trans(0.3)}>
 
           {/* Photo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -288,7 +297,7 @@ export default function HomePage() {
             pointerEvents: 'none',
           }} />
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   )
 }
