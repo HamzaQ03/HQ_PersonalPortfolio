@@ -341,13 +341,27 @@ section { scroll-margin-top: 80px; }
   }
 
   /* Experience: the role card is height: 215 on desktop. On mobile,
-     the NIH/TPS card has the longest title + subtext, which pushes
-     the absolutely-flexed buttons row past the card boundary. Let
-     the card grow vertically on mobile while keeping a sensible
-     minimum so short-content cards don't collapse. */
+     lock every card to a fixed 420px tall so the list reads as a
+     uniform stack — long-title cards (NIH/TPS) and short-title cards
+     (Baker Tilly) come out the same size. The fixed height plus
+     overflow: hidden plus the more aggressive .exp-card-desc fade
+     below means content visually truncates at the same row across
+     every card, regardless of how long the title or description is. */
   .exp-role-card {
-    height: auto !important;
-    min-height: 280px !important;
+    height: 420px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Experience: pull the description fade much earlier on mobile.
+     Desktop's mask runs 35% → 100% (long readable run, soft fade at
+     the tail). Mobile runs 35% → 75% so by the second bullet's second
+     line the content is fully transparent, keeping every card's
+     visible area roughly the same height. */
+  .exp-card-desc {
+    mask-image: linear-gradient(180deg, #000 35%, transparent 75%) !important;
+    -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 75%) !important;
   }
 
   /* Experience: the EXPAND DESCRIPTION + Simplified Version buttons

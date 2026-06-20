@@ -529,7 +529,7 @@ function CardFaceContent({
       </div>
 
       {/* ── Description (fade-truncated, grows to fill) ── */}
-      <div style={{
+      <div className="exp-card-desc" style={{
         flex: 1,
         overflow: 'hidden',
         minHeight: 0,
