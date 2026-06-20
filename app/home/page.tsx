@@ -1,6 +1,7 @@
 ﻿'use client'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 const A  = '#c8a87c'
 const T  = '#f0f0f0'
@@ -12,34 +13,53 @@ const trans  = (delay = 0) => ({ duration: 0.6, ease: 'easeOut' as const, delay 
 
 export default function HomePage() {
   const [showRing, setShowRing] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowRing(true), 80)
     return () => clearTimeout(t1)
   }, [])
 
-  // Lock document scrolling while the home page is mounted, then unconditionally
-  // clear the lock on unmount. We intentionally don't snapshot the *previous*
-  // overflow value to restore — when this effect runs the splash overlay has
-  // already set body.overflow = 'hidden' for its own scroll lock, so capturing
-  // it would persist 'hidden' after splash dismissal and propagate to every
-  // page the user navigates to next (Skills, Reviews, etc.), permanently
-  // blocking trackpad scroll. Forcing the cleanup to '' is correct because
-  // no other route in the app wants the body scroll-locked.
+  // Lock document scrolling while the home page is mounted on DESKTOP only.
+  // Mobile gets natural scroll so the 1-column layout (stacked name / quote
+  // / photo banner) doesn't get clipped at 100vh. We check window width
+  // synchronously inside the effect (not via useIsMobile) so the lock
+  // decision is correct on first paint — useIsMobile starts false and
+  // would unconditionally lock on the initial run before flipping.
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    const isMobileCheck = window.matchMedia('(max-width: 767px)').matches
+
+    if (isMobileCheck) {
+      // Splash sets body.overflow='hidden' for its own scroll lock; on mobile
+      // we actively release that lock so the stacked single-column layout can
+      // scroll naturally. Cleared every render so a splash → home transition
+      // doesn't strand the page locked.
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+      return
+    }
+
+    const originalHtml = document.documentElement.style.overflow
+    const originalBody = document.body.style.overflow
+
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
 
     return () => {
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
+      document.documentElement.style.overflow = originalHtml
+      document.body.style.overflow = originalBody
     }
   }, [])
 
   return (
     <div
       className="home-page-reveal"
-      style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden' }}
+      style={{
+        height: isMobile ? 'auto' : '100vh',
+        maxHeight: isMobile ? 'none' : '100vh',
+        overflow: isMobile ? 'auto' : 'hidden',
+      }}
     >
       {/* The "bridges vault white flash" overlay used to live here as a
           full-screen white motion.div with initial: opacity 1 →
@@ -93,20 +113,20 @@ export default function HomePage() {
         {/* ══ TOP SECTION — two columns ══════════════════════════════════ */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1.2fr',
-          gap: 60,
-          padding: '90px 80px 40px 80px',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr',
+          gap: isMobile ? 32 : 60,
+          padding: isMobile ? '60px 24px 32px 24px' : '90px 80px 40px 80px',
           alignItems: 'flex-start',
           flexShrink: 0,
-          maxHeight: 'calc(100vh - 55vh)',
-          overflow: 'hidden',
+          maxHeight: isMobile ? 'none' : 'calc(100vh - 55vh)',
+          overflow: isMobile ? 'visible' : 'hidden',
         }}>
           {/* ── LEFT: Name / tagline ── */}
           <div>
             <motion.h1
               style={{
                 fontFamily: 'var(--font-space-grotesk)', fontWeight: 700,
-                fontSize: 52, color: T,
+                fontSize: isMobile ? 36 : 52, color: T,
                 lineHeight: 1.08, margin: '0 0 16px',
               }}
               variants={fadeUp} initial="visible" animate="visible" viewport={vp} transition={trans(0.08)}>
@@ -168,7 +188,7 @@ export default function HomePage() {
                     height: 32, lineHeight: '32px',
                     fontFamily: 'Inter, sans-serif',
                     fontWeight: 500,
-                    fontSize: 18,
+                    fontSize: isMobile ? 16 : 18,
                     color: '#c8a87c',
                     letterSpacing: 0.3,
                     whiteSpace: 'nowrap',
@@ -186,7 +206,7 @@ export default function HomePage() {
             {/* Decorative quote mark — left of text */}
             <span aria-hidden="true" style={{
               fontFamily:    "'Times New Roman', serif",
-              fontSize:      64,
+              fontSize:      isMobile ? 40 : 64,
               color:         '#ffffff',
               lineHeight:    1,
               opacity:       0.5,
@@ -203,7 +223,7 @@ export default function HomePage() {
                 style={{
                   fontFamily: "'Times New Roman', serif",
                   fontStyle:  'italic',
-                  fontSize:   15,
+                  fontSize:   isMobile ? 14 : 15,
                   color:      '#f5e8d4',
                   lineHeight: 1.65,
                   margin:     '0 0 16px',
@@ -220,7 +240,7 @@ export default function HomePage() {
                 style={{
                   fontFamily: "'Times New Roman', serif",
                   fontStyle:  'italic',
-                  fontSize:   15,
+                  fontSize:   isMobile ? 14 : 15,
                   color:      '#f5e8d4',
                   lineHeight: 1.65,
                   margin:     '0 0 16px',
@@ -239,7 +259,7 @@ export default function HomePage() {
                 style={{
                   fontFamily: "'Times New Roman', serif",
                   fontStyle:  'italic',
-                  fontSize:   15,
+                  fontSize:   isMobile ? 14 : 15,
                   color:      '#f5e8d4',
                   lineHeight: 1.65,
                   margin:     0,

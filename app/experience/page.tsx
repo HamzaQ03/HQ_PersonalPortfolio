@@ -470,7 +470,7 @@ function CardFaceContent({
   onExpand: (e: React.MouseEvent) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 215 }}>
+    <div className="exp-role-card" style={{ display: 'flex', flexDirection: 'column', height: 215 }}>
       {/* ── Header (fixed) ── */}
       <div style={{ flexShrink: 0 }}>
         {/* Logo + title/info row */}
@@ -495,7 +495,7 @@ function CardFaceContent({
           {/* Title + badge/dates + company/location */}
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Top row: title + badge + dates */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+            <div className="exp-card-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
               <h3 style={{
                 fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 18,
                 color: T, margin: 0,
@@ -529,7 +529,7 @@ function CardFaceContent({
       </div>
 
       {/* ── Description (fade-truncated, grows to fill) ── */}
-      <div style={{
+      <div className="exp-card-desc" style={{
         flex: 1,
         overflow: 'hidden',
         minHeight: 0,
@@ -540,7 +540,7 @@ function CardFaceContent({
       </div>
 
       {/* ── Buttons row (fixed) ── */}
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8, flexShrink: 0 }}>
+      <div className="exp-card-buttons" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8, flexShrink: 0 }}>
         <ExpandButton onExpand={onExpand} />
         <FlipButton isFlipped={isFlipped} onFlip={onFlip} />
       </div>

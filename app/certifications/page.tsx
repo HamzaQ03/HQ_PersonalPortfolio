@@ -211,7 +211,7 @@ function CertModal({
                       <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 20, color: T, margin: '0 0 8px' }}>
                         {c.name}
                       </h3>
-                      <p style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
+                      <p className="cert-meta-line" style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
                         {c.code ? `Code: ${c.code} · ` : ''}Issuer: {c.issuer} · Period: {c.period}
                       </p>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: '0 0 20px' }}>
@@ -253,7 +253,7 @@ function CertModal({
                       <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 20, color: T, margin: '0 0 8px' }}>
                         {c.name}
                       </h3>
-                      <p style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
+                      <p className="cert-meta-line" style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
                         Code: {c.code} · Issuer: {c.issuer} · Expected Completion: {c.expected}
                       </p>
                       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: 0 }}>
@@ -387,7 +387,7 @@ export default function CertificationsPage() {
                         <CertLogo certName={c.name} issuer={c.issuer} size={40} />
                         <div style={{ flex: 1 }}>
                           {/* Top row: name + download button + badge (all inline, mirrors in-progress layout) */}
-                          <div className="flex items-center justify-between gap-3 mb-2">
+                          <div className="cert-card-header flex items-center justify-between gap-3 mb-2">
                             <h3 className="font-heading font-semibold text-sm flex-1" style={{ color: T }}>
                               {c.name}
                             </h3>
@@ -422,7 +422,7 @@ export default function CertificationsPage() {
                           </div>
 
                           {/* CHANGE 4: single-line details */}
-                          <p className="font-mono text-xs" style={{ color: A, margin: 0 }}>
+                          <p className="cert-meta-line font-mono text-xs" style={{ color: A, margin: 0 }}>
                             {c.code ? `Code: ${c.code} · ` : ''}Issuer: {c.issuer} · Period: {c.period}
                           </p>
 
@@ -484,7 +484,7 @@ export default function CertificationsPage() {
                           </div>
 
                           {/* CHANGE 4: single-line details */}
-                          <p className="font-mono text-xs" style={{ color: A, margin: 0 }}>
+                          <p className="cert-meta-line font-mono text-xs" style={{ color: A, margin: 0 }}>
                             Code: {c.code} · Issuer: {c.issuer} · Expected Completion: {c.expected}
                           </p>
                         </div>

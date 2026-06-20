@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { playClickSound } from '@/lib/sound'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 type Role = 'user' | 'assistant'
 type Message = { role: Role; content: string }
@@ -54,6 +55,7 @@ export default function HamzasIntel() {
   const [mode, setMode]           = useState<'professional' | 'casual'>('professional')
   const bottomRef                 = useRef<HTMLDivElement>(null)
   const inputRef                  = useRef<HTMLInputElement>(null)
+  const isMobile                  = useIsMobile()
 
   // Inject opening message the first time the window opens
   const openedOnce = useRef(false)
@@ -155,7 +157,7 @@ export default function HamzasIntel() {
       `}</style>
 
       {/* ── Floating bubble + tooltip ──────────────────────────────────── */}
-      <div className="hidden md:block" style={{ position: 'fixed', bottom: 28, right: 24, zIndex: 50 }}>
+      <div className="block" style={{ position: 'fixed', bottom: 28, right: 24, zIndex: 50 }}>
 
         {/* Intel Available tooltip — hidden when chat is open */}
         {!open && (
@@ -199,8 +201,8 @@ export default function HamzasIntel() {
           aria-label="Open Hamza's Intel chat"
           style={{
             display:        'flex',
-            width:          52,
-            height:         52,
+            width:          isMobile ? 52 : 52,
+            height:         isMobile ? 52 : 52,
             borderRadius:   '50%',
             background:     '#000000',
             border:         '1px solid rgba(200,168,124,0.4)',
@@ -227,14 +229,14 @@ export default function HamzasIntel() {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             style={{
               position:       'fixed',
-              bottom:         92,
-              right:          28,
+              bottom:         isMobile ? 84 : 92,
+              right:          isMobile ? 12 : 28,
               zIndex:         50,
-              width:          360,
-              height:         500,
+              width:          isMobile ? 'calc(100vw - 24px)' : 360,
+              height:         isMobile ? 'calc(100vh - 100px)' : 500,
               background:     'rgba(0,0,0,0.92)',
               border:         '2px solid #c8a87c',
-              borderRadius:   12,
+              borderRadius:   isMobile ? 12 : 12,
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               boxShadow:      '0 0 40px rgba(0,0,0,0.6)',

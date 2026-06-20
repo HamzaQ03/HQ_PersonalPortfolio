@@ -272,3 +272,138 @@ section { scroll-margin-top: 80px; }
     transform: scale(1);
   }
 }
+
+/* ─── Mobile card headers — Experience / Reviews / Certifications ───
+   Each affected card has a tightly-packed header row (title + badges +
+   buttons) that's fine on desktop but overlaps on narrow viewports.
+   These rules only fire under (max-width: 767px) so desktop renders
+   bit-for-bit identical to main. */
+@media (max-width: 767px) {
+  /* Experience: title row stacks vertically; the badge/dates column
+     inside flips to horizontal so they sit side-by-side instead of
+     piled into a tall right rail. */
+  .exp-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .exp-card-header > div {
+    align-items: flex-start !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Reviews: the Preview button + stars sit in an absolutely-
+     positioned column at the top-right of the content area, with
+     the mentor name's paddingRight: 220 carving space for it. On
+     mobile we drop the absolute positioning and the right padding
+     so the button + stars flow as a row UNDER the name, and the
+     button stretches full-width for an easier tap target. */
+  .review-card-header {
+    position: static !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+  }
+  .review-card-header button {
+    flex: 1 !important;
+    text-align: center !important;
+  }
+  .review-card-name {
+    padding-right: 0 !important;
+  }
+
+  /* Certifications: cert name + Preview button + COMPLETED badge
+     stack vertically. The inner controls wrapper flips to wrap-
+     enabled row so button + badge sit beside each other under the
+     name instead of fighting for inline space. */
+  .cert-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .cert-card-header > div {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .cert-card-header h3 {
+    font-size: 14px !important;
+  }
+  .cert-meta-line {
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+    word-break: break-word !important;
+  }
+
+  /* Experience: the role card is height: 215 on desktop. On mobile,
+     lock every card to a fixed 420px tall so the list reads as a
+     uniform stack — long-title cards (NIH/TPS) and short-title cards
+     (Baker Tilly) come out the same size. The fixed height plus
+     overflow: hidden plus the more aggressive .exp-card-desc fade
+     below means content visually truncates at the same row across
+     every card, regardless of how long the title or description is. */
+  .exp-role-card {
+    height: 420px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Experience: pull the description fade much earlier on mobile.
+     Desktop's mask runs 35% → 100% (long readable run, soft fade at
+     the tail). Mobile runs 35% → 75% so by the second bullet's second
+     line the content is fully transparent, keeping every card's
+     visible area roughly the same height. */
+  .exp-card-desc {
+    mask-image: linear-gradient(180deg, #000 35%, transparent 75%) !important;
+    -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 75%) !important;
+  }
+
+  /* Experience: the EXPAND DESCRIPTION + Simplified Version buttons
+     overflow the 343px-wide card at 375vw. On mobile they become a
+     2-column grid that always fits inside the card border, with each
+     button stretched to fill its column and slightly tighter type so
+     the label can wrap to a second line instead of overflowing. */
+  .exp-card-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+  }
+  .exp-card-buttons > button {
+    width: 100% !important;
+    font-size: 9px !important;
+    padding: 8px 6px !important;
+    text-align: center !important;
+    letter-spacing: 1px !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Bottom safe-area for the AI chatbot launcher. The HQ launcher
+     sits at bottom: 84, right: 12 (52×52 button), so the last 136px
+     of any page can slide underneath it as the user scrolls. 120px
+     of body padding-bottom keeps the last line of content above the
+     launcher's top edge while leaving a small margin for tap comfort. */
+  body {
+    padding-bottom: 120px;
+  }
+}
+
+/* Extra-narrow phones (iPhone SE = 375px, mini = 360px). Even inside
+   a 2-col grid cell, "▸ EXPAND DESCRIPTION" can still overflow on
+   sub-380px viewports — drop a hair more font size and tighten the
+   horizontal padding. Standard iPhones (393px+) stay at 9px. */
+@media (max-width: 380px) {
+  .exp-card-buttons > button {
+    font-size: 8px !important;
+    padding: 8px 4px !important;
+    letter-spacing: 0.5px !important;
+  }
+}
