@@ -470,7 +470,7 @@ function CardFaceContent({
   onExpand: (e: React.MouseEvent) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 215 }}>
+    <div className="exp-role-card" style={{ display: 'flex', flexDirection: 'column', height: 215 }}>
       {/* ── Header (fixed) ── */}
       <div style={{ flexShrink: 0 }}>
         {/* Logo + title/info row */}

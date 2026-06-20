@@ -340,6 +340,16 @@ section { scroll-margin-top: 80px; }
     word-break: break-word !important;
   }
 
+  /* Experience: the role card is height: 215 on desktop. On mobile,
+     the NIH/TPS card has the longest title + subtext, which pushes
+     the absolutely-flexed buttons row past the card boundary. Let
+     the card grow vertically on mobile while keeping a sensible
+     minimum so short-content cards don't collapse. */
+  .exp-role-card {
+    height: auto !important;
+    min-height: 280px !important;
+  }
+
   /* Experience: the EXPAND DESCRIPTION + Simplified Version buttons
      overflow the 343px-wide card at 375vw. On mobile they become a
      2-column grid that always fits inside the card border, with each
@@ -369,5 +379,17 @@ section { scroll-margin-top: 80px; }
      launcher's top edge while leaving a small margin for tap comfort. */
   body {
     padding-bottom: 120px;
+  }
+}
+
+/* Extra-narrow phones (iPhone SE = 375px, mini = 360px). Even inside
+   a 2-col grid cell, "▸ EXPAND DESCRIPTION" can still overflow on
+   sub-380px viewports — drop a hair more font size and tighten the
+   horizontal padding. Standard iPhones (393px+) stay at 9px. */
+@media (max-width: 380px) {
+  .exp-card-buttons > button {
+    font-size: 8px !important;
+    padding: 8px 4px !important;
+    letter-spacing: 0.5px !important;
   }
 }
