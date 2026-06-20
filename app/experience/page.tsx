@@ -495,7 +495,7 @@ function CardFaceContent({
           {/* Title + badge/dates + company/location */}
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Top row: title + badge + dates */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+            <div className="exp-card-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
               <h3 style={{
                 fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 18,
                 color: T, margin: 0,

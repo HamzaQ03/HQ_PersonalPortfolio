@@ -342,6 +342,31 @@ const PAGE_STYLES = `
     .proj-tabs { flex-direction: column !important; }
     .proj-card { padding: 16px !important; height: auto !important; min-height: 330px; }
   }
+
+  @media (max-width: 767px) {
+    .proj-description {
+      display: -webkit-box !important;
+      -webkit-line-clamp: 5 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      position: relative !important;
+      mask-image: linear-gradient(180deg, #000 70%, transparent 100%) !important;
+      -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%) !important;
+    }
+    .proj-card::after {
+      content: 'TAP CARD FOR FULL DETAILS' !important;
+      position: absolute !important;
+      bottom: 12px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      font-family: monospace !important;
+      font-size: 8px !important;
+      letter-spacing: 1.5px !important;
+      color: rgba(200,168,124,0.6) !important;
+      pointer-events: none !important;
+    }
+    .proj-card { padding-bottom: 32px !important; }
+  }
 `
 
 /* ─────────────────────────────────────────────────────────────
@@ -424,7 +449,7 @@ function ProjectCard({
         maskImage: 'linear-gradient(180deg, #000 35%, transparent 100%)',
         WebkitMaskImage: 'linear-gradient(180deg, #000 35%, transparent 100%)',
       }}>
-        <p style={{
+        <p className="proj-description" style={{
           fontFamily:  'Inter, sans-serif',
           fontSize:    12,
           color:       '#ffffff',

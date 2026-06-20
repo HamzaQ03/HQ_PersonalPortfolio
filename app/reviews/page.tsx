@@ -821,7 +821,7 @@ export default function ReviewsPage() {
                         {/* Preview button + stars — absolutely positioned so they
                             don't expand the name row's height and push the title
                             block down. */}
-                        <div style={{
+                        <div className="review-card-header" style={{
                           position: 'absolute', top: 0, right: 0,
                           display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6,
                         }}>
@@ -838,7 +838,7 @@ export default function ReviewsPage() {
                         </div>
 
                         {/* Name */}
-                        <h3 style={{
+                        <h3 className="review-card-name" style={{
                           fontFamily: 'var(--font-space-grotesk)', fontWeight: 700,
                           fontSize: 18, color: T, margin: '0 0 4px',
                           paddingRight: 220,
@@ -940,7 +940,7 @@ export default function ReviewsPage() {
 
                             {/* Absolute right column: optional Preview Letter
                                 button + stars — same positioning as mentor. */}
-                            <div style={{
+                            <div className="review-card-header" style={{
                               position: 'absolute', top: 0, right: 0,
                               display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6,
                             }}>
@@ -971,7 +971,7 @@ export default function ReviewsPage() {
                             </div>
 
                             {/* Name */}
-                            <h3 style={{
+                            <h3 className="review-card-name" style={{
                               fontFamily: 'var(--font-space-grotesk)', fontWeight: 700,
                               fontSize: 18, color: T, margin: '0 0 4px',
                               paddingRight: 220,

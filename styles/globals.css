@@ -272,3 +272,71 @@ section { scroll-margin-top: 80px; }
     transform: scale(1);
   }
 }
+
+/* ─── Mobile card headers — Experience / Reviews / Certifications ───
+   Each affected card has a tightly-packed header row (title + badges +
+   buttons) that's fine on desktop but overlaps on narrow viewports.
+   These rules only fire under (max-width: 767px) so desktop renders
+   bit-for-bit identical to main. */
+@media (max-width: 767px) {
+  /* Experience: title row stacks vertically; the badge/dates column
+     inside flips to horizontal so they sit side-by-side instead of
+     piled into a tall right rail. */
+  .exp-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .exp-card-header > div {
+    align-items: flex-start !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Reviews: the Preview button + stars sit in an absolutely-
+     positioned column at the top-right of the content area, with
+     the mentor name's paddingRight: 220 carving space for it. On
+     mobile we drop the absolute positioning and the right padding
+     so the button + stars flow as a row UNDER the name, and the
+     button stretches full-width for an easier tap target. */
+  .review-card-header {
+    position: static !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+  }
+  .review-card-header button {
+    flex: 1 !important;
+    text-align: center !important;
+  }
+  .review-card-name {
+    padding-right: 0 !important;
+  }
+
+  /* Certifications: cert name + Preview button + COMPLETED badge
+     stack vertically. The inner controls wrapper flips to wrap-
+     enabled row so button + badge sit beside each other under the
+     name instead of fighting for inline space. */
+  .cert-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .cert-card-header > div {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .cert-card-header h3 {
+    font-size: 14px !important;
+  }
+  .cert-meta-line {
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+    word-break: break-word !important;
+  }
+}
