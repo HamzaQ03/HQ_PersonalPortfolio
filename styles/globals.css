@@ -339,4 +339,35 @@ section { scroll-margin-top: 80px; }
     line-height: 1.6 !important;
     word-break: break-word !important;
   }
+
+  /* Experience: the EXPAND DESCRIPTION + Simplified Version buttons
+     overflow the 343px-wide card at 375vw. On mobile they become a
+     2-column grid that always fits inside the card border, with each
+     button stretched to fill its column and slightly tighter type so
+     the label can wrap to a second line instead of overflowing. */
+  .exp-card-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+  }
+  .exp-card-buttons > button {
+    width: 100% !important;
+    font-size: 9px !important;
+    padding: 8px 6px !important;
+    text-align: center !important;
+    letter-spacing: 1px !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Bottom safe-area for the AI chatbot launcher. The HQ launcher
+     sits at bottom: 84, right: 12 (52×52 button), so the last 136px
+     of any page can slide underneath it as the user scrolls. 120px
+     of body padding-bottom keeps the last line of content above the
+     launcher's top edge while leaving a small margin for tap comfort. */
+  body {
+    padding-bottom: 120px;
+  }
 }

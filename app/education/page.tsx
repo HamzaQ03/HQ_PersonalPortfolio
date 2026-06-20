@@ -81,6 +81,42 @@ const PAGE_STYLES = `
     .edu-tab-btn  { flex-shrink: 0; white-space: nowrap; width: auto !important; }
   }
 
+  @media (max-width: 767px) {
+    .edu-tabs {
+      flex-direction: column !important;
+      overflow-x: visible !important;
+      width: 100% !important;
+      gap: 6px !important;
+      padding-bottom: 0 !important;
+    }
+    .edu-tab-btn {
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+      width: 100% !important;
+      text-align: left !important;
+    }
+    .hq-seal {
+      width: 56px !important;
+      height: 56px !important;
+    }
+    .hq-seal-mono {
+      font-size: 13px !important;
+    }
+    .hq-seal-line {
+      width: 12px !important;
+    }
+    .hq-seal-year {
+      font-size: 3.5px !important;
+    }
+    /* Push diploma content down so the centered "THIS IS TO CERTIFY THAT"
+       line doesn't run under the absolutely-positioned 56px HQ seal in
+       the top-right. 88px top = 20 (seal top offset) + 56 (seal height)
+       + 12 (breathing buffer). Sides shrink to 16 for narrow viewports. */
+    .edu-diploma {
+      padding: 88px 16px 24px !important;
+    }
+  }
+
   /* ── Extracurricular tab ── */
   .ec-grid {
     display: grid;

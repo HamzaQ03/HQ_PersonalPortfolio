@@ -540,7 +540,7 @@ function CardFaceContent({
       </div>
 
       {/* ── Buttons row (fixed) ── */}
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8, flexShrink: 0 }}>
+      <div className="exp-card-buttons" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8, flexShrink: 0 }}>
         <ExpandButton onExpand={onExpand} />
         <FlipButton isFlipped={isFlipped} onFlip={onFlip} />
       </div>
