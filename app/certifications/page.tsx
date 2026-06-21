@@ -143,7 +143,8 @@ function CertModal({
             position: 'fixed', inset: 0,
             background: 'rgba(0,0,0,0.78)',
             zIndex: 100,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+            padding: '96px 24px 24px 24px',
           }}
         >
           <motion.div
@@ -158,6 +159,8 @@ function CertModal({
               borderRadius: 12,
               maxWidth: 560,
               width: '90%',
+              maxHeight: 'calc(100vh - 120px)',
+              overflowY: 'auto',
               padding: 28,
               position: 'relative',
             }}
