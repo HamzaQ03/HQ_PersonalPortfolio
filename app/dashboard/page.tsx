@@ -1,6 +1,5 @@
 ﻿'use client'
 import { useState, useEffect, useCallback, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -15,6 +14,42 @@ type Visit = {
   ip: string | null
   created_at: string
 }
+
+type Review = {
+  id: string
+  created_at: string
+  name: string
+  reviewer_email: string | null
+  profession: string | null
+  company: string | null
+  connection: string | null
+  rating: number
+  review_text: string
+  approved: boolean | null
+  recommendation_letter_url: string | null
+}
+
+type Message = {
+  id: string
+  created_at: string
+  full_name: string
+  email: string
+  phone: string | null
+  company: string | null
+  message: string
+}
+
+type ResumeRequest = {
+  id: string
+  created_at: string
+  full_name: string
+  email: string
+  company: string | null
+  reason: string | null
+  approved: boolean | null
+}
+
+type Tab = 'visits' | 'reviews' | 'messages' | 'resume'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const T    = '#f0f0f0'
@@ -137,18 +172,13 @@ function FilterBtn({
   )
 }
 
-// ── Main dashboard (inner — uses useSearchParams) ──────────────────────────────
+// ── Main dashboard (access gated by middleware.ts) ─────────────────────────────
 function DashboardInner() {
-  const router       = useRouter()
-  const searchParams = useSearchParams()
-
-  // ── Security gate ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const key = searchParams.get('key')
-    if (key !== 'hq-portfolio-access') router.replace('/')
-  }, [searchParams, router])
-
   const [visits,    setVisits]    = useState<Visit[]>([])
+  const [reviews,   setReviews]   = useState<Review[]>([])
+  const [messages,  setMessages]  = useState<Message[]>([])
+  const [resumeReqs, setResumeReqs] = useState<ResumeRequest[]>([])
+  const [activeTab, setActiveTab] = useState<Tab>('visits')
   const [loading,   setLoading]   = useState(true)
   const [clock,     setClock]     = useState('')
   const [page,      setPage]      = useState(0)
@@ -185,6 +215,47 @@ function DashboardInner() {
     return () => clearInterval(t)
   }, [fetchData])
 
+  // ── Fetch reviews / messages / resume requests ───────────────────────────────
+  // Each fetch is independent — if one table doesn't exist or RLS blocks it,
+  // the others still load. Errors are logged but don't crash the tab.
+  useEffect(() => {
+    async function fetchAll() {
+      try {
+        const { data } = await supabase
+          .from('reviews')
+          .select('id, created_at, name, reviewer_email, profession, company, connection, rating, review_text, approved, recommendation_letter_url')
+          .order('created_at', { ascending: false })
+          .limit(100)
+        if (data) setReviews(data as Review[])
+      } catch (err) {
+        console.error('[dashboard] reviews fetch failed:', err)
+      }
+
+      try {
+        const { data } = await supabase
+          .from('portfolio_direct_messages')
+          .select('id, created_at, full_name, email, phone, company, message')
+          .order('created_at', { ascending: false })
+          .limit(100)
+        if (data) setMessages(data as Message[])
+      } catch (err) {
+        console.error('[dashboard] messages fetch failed:', err)
+      }
+
+      try {
+        const { data } = await supabase
+          .from('resume_access_requests')
+          .select('id, created_at, full_name, email, company, reason, approved')
+          .order('created_at', { ascending: false })
+          .limit(100)
+        if (data) setResumeReqs(data as ResumeRequest[])
+      } catch (err) {
+        console.error('[dashboard] resume requests fetch failed:', err)
+      }
+    }
+    fetchAll()
+  }, [])
+
   // ── Derived stats ────────────────────────────────────────────────────────────
   const todayStart = startOfDay().getTime()
   const weekStart  = startOfWeek().getTime()
@@ -219,9 +290,6 @@ function DashboardInner() {
   function clearFilters() {
     setFPage('all'); setFCountry('all'); setFDevice('all'); setFDate('all'); setPage(0)
   }
-
-  // Security: don't render anything if key is wrong
-  if (searchParams.get('key') !== 'hq-portfolio-access') return null
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: T, paddingBottom: 60 }}>
@@ -290,6 +358,67 @@ function DashboardInner() {
       </div>
 
       <div style={{ padding: '32px 32px 0' }}>
+
+        {/* ── Tab navigation + logout ─────────────────────────────────────── */}
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 24,
+          flexWrap: 'wrap',
+          borderBottom: '1px solid rgba(200,168,124,0.2)',
+          paddingBottom: 12,
+        }}>
+          {([
+            { id: 'visits',   label: 'VISITS',           count: visits.length },
+            { id: 'reviews',  label: 'REVIEWS',          count: reviews.length },
+            { id: 'messages', label: 'MESSAGES',         count: messages.length },
+            { id: 'resume',   label: 'RESUME REQUESTS',  count: resumeReqs.length },
+          ] as { id: Tab; label: string; count: number }[]).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '8px 16px',
+                background: activeTab === tab.id ? 'rgba(200,168,124,0.15)' : 'transparent',
+                color: activeTab === tab.id ? '#f5e8d4' : 'rgba(200,168,124,0.6)',
+                border: `1px solid ${activeTab === tab.id ? '#c8a87c' : 'rgba(200,168,124,0.3)'}`,
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: 11,
+                letterSpacing: 1.5,
+                transition: 'all 200ms',
+              }}
+            >
+              {tab.label} · {tab.count}
+            </button>
+          ))}
+
+          <div style={{ flex: 1 }} />
+
+          <button
+            onClick={async () => {
+              await fetch('/api/dashboard-auth', { method: 'DELETE' })
+              window.location.href = '/dashboard/login'
+            }}
+            style={{
+              padding: '8px 16px',
+              background: 'transparent',
+              color: 'rgba(255,107,107,0.7)',
+              border: '1px solid rgba(255,107,107,0.4)',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              letterSpacing: 1.5,
+              transition: 'all 200ms',
+            }}
+          >
+            ↗ LOG OUT
+          </button>
+        </div>
+
+        {activeTab === 'visits' && (<>
 
         {/* ── Row 1: 4 stat cards ──────────────────────────────────────────── */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -538,6 +667,110 @@ function DashboardInner() {
             </div>
           )}
         </div>
+
+        </>)}
+
+        {/* ── Reviews tab ─────────────────────────────────────────────────── */}
+        {activeTab === 'reviews' && (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {reviews.length === 0 ? (
+              <p style={{ color: TM, fontFamily: 'monospace', fontSize: 12 }}>No reviews yet.</p>
+            ) : reviews.map(r => (
+              <div key={r.id} style={{
+                padding: 16,
+                background: 'rgba(10,10,10,0.8)',
+                border: `1px solid ${r.approved ? 'rgba(34,197,94,0.3)' : 'rgba(200,168,124,0.2)'}`,
+                borderRadius: 6,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <p style={{ color: T, fontSize: 14, fontWeight: 600, margin: 0 }}>{r.name}</p>
+                    <p style={{ color: TM, fontSize: 11, margin: '2px 0 0' }}>
+                      {r.profession || '—'} · {r.company || '—'}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ color: '#ffc107', fontSize: 13, margin: 0 }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
+                    <p style={{ color: TM, fontSize: 10, fontFamily: 'monospace', margin: '2px 0 0' }}>{relativeTime(r.created_at)}</p>
+                  </div>
+                </div>
+                <p style={{ color: '#d4c4a8', fontSize: 13, lineHeight: 1.6, margin: '8px 0', fontStyle: 'italic' }}>&ldquo;{r.review_text}&rdquo;</p>
+                <div style={{ display: 'flex', gap: 8, fontSize: 10, fontFamily: 'monospace', color: TM, flexWrap: 'wrap' }}>
+                  <span>{r.approved ? '✓ APPROVED' : '⏳ PENDING'}</span>
+                  {r.reviewer_email && <span>· {r.reviewer_email}</span>}
+                  {r.recommendation_letter_url && (
+                    <a href={r.recommendation_letter_url} target="_blank" rel="noopener noreferrer" style={{ color: A }}>↓ Letter</a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Messages tab ────────────────────────────────────────────────── */}
+        {activeTab === 'messages' && (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {messages.length === 0 ? (
+              <p style={{ color: TM, fontFamily: 'monospace', fontSize: 12 }}>No messages yet.</p>
+            ) : messages.map(m => (
+              <div key={m.id} style={{
+                padding: 16,
+                background: 'rgba(10,10,10,0.8)',
+                border: '1px solid rgba(200,168,124,0.2)',
+                borderRadius: 6,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <p style={{ color: T, fontSize: 14, fontWeight: 600, margin: 0 }}>{m.full_name}</p>
+                    <p style={{ color: A, fontSize: 11, fontFamily: 'monospace', margin: '2px 0 0' }}>
+                      <a href={`mailto:${m.email}`} style={{ color: A }}>{m.email}</a>
+                      {m.phone && <span> · {m.phone}</span>}
+                      {m.company && <span> · {m.company}</span>}
+                    </p>
+                  </div>
+                  <p style={{ color: TM, fontSize: 10, fontFamily: 'monospace', margin: 0 }}>{relativeTime(m.created_at)}</p>
+                </div>
+                <p style={{ color: '#d4c4a8', fontSize: 13, lineHeight: 1.6, margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{m.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Resume requests tab ─────────────────────────────────────────── */}
+        {activeTab === 'resume' && (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {resumeReqs.length === 0 ? (
+              <p style={{ color: TM, fontFamily: 'monospace', fontSize: 12 }}>No resume requests yet.</p>
+            ) : resumeReqs.map(rr => (
+              <div key={rr.id} style={{
+                padding: 16,
+                background: 'rgba(10,10,10,0.8)',
+                border: `1px solid ${rr.approved ? 'rgba(34,197,94,0.3)' : 'rgba(200,168,124,0.2)'}`,
+                borderRadius: 6,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <p style={{ color: T, fontSize: 14, fontWeight: 600, margin: 0 }}>{rr.full_name}</p>
+                    <p style={{ color: A, fontSize: 11, fontFamily: 'monospace', margin: '2px 0 0' }}>
+                      <a href={`mailto:${rr.email}`} style={{ color: A }}>{rr.email}</a>
+                      {rr.company && <span> · {rr.company}</span>}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: 11, fontFamily: 'monospace', margin: 0, color: rr.approved === true ? '#22c55e' : rr.approved === false ? '#ff6b6b' : '#c8a87c' }}>
+                      {rr.approved === true ? '✓ APPROVED' : rr.approved === false ? '✗ DECLINED' : '⏳ PENDING'}
+                    </p>
+                    <p style={{ color: TM, fontSize: 10, fontFamily: 'monospace', margin: '2px 0 0' }}>{relativeTime(rr.created_at)}</p>
+                  </div>
+                </div>
+                {rr.reason && (
+                  <p style={{ color: '#d4c4a8', fontSize: 13, lineHeight: 1.6, margin: '8px 0 0', fontStyle: 'italic' }}>&ldquo;{rr.reason}&rdquo;</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
       </div>
     </div>
   )
