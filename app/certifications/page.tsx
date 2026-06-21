@@ -21,6 +21,7 @@ const activeCerts: {
   issuer: string
   period: string
   pdfUrl: string | null
+  description: string
 }[] = [
   {
     name:   'CompTIA Security+',
@@ -28,6 +29,7 @@ const activeCerts: {
     issuer: 'CompTIA',
     period: 'May 2026 – Present',
     pdfUrl: '/Certificates/CompTIA%20Security%2B%20ce%20certificate%20-%20HQ%20-%20Certificate.pdf',
+    description: `Graduating with a cybersecurity concentration was never going to be the end of my learning curve. After two years building federal compliance programs across FedRAMP, CMMC, and RMF, I realized I was assessing technical controls every day without the deep technical fluency that sits underneath them. Security+ was my answer. I pursued the certification to get my hands dirty with the core security principles I had been operating around but not always operating in, including threat detection and response, cryptography, identity and access management, network security, and risk management. Passing SY0-701 closed the gap between the compliance lens I work through professionally and the technical foundation that makes that work credible, and gave me a sharper perspective when reviewing the controls and architectures I assess in my day to day GRC and A&A engagements.`,
   },
   {
     name:   'AWS Solutions Architect',
@@ -35,6 +37,7 @@ const activeCerts: {
     issuer: 'Amazon Web Services (AWS)',
     period: 'February 2026 – Present',
     pdfUrl: '/Certificates/AWS%20Certified%20Solutions%20Architect%20-%20HQ-%20Certificate.pdf',
+    description: `Every FedRAMP package I worked on at FedHIVE involved AWS in some form, but I was always reading about it secondhand through Customer Responsibility Matrices and shared responsibility documentation. I wanted to understand AWS the way the engineers building on it understand it. The SAA-C03 was my entry point into that world, forcing me to learn how the platform actually scales, how its services interconnect, how its security model is structured from IAM upward, and how architectural decisions translate into real cost, performance, and security tradeoffs. Passing the exam gave me the technical grounding to engage cloud engineers as a peer when discussing control inheritance, shared responsibility, and FedRAMP authorized service usage, and laid the foundation for the multi cloud expertise I am building toward across AWS, Azure, and GCP.`,
   },
   {
     name:   'Microsoft Azure Administrator',
@@ -42,6 +45,7 @@ const activeCerts: {
     issuer: 'Microsoft',
     period: 'April 2026 – Present',
     pdfUrl: '/Certificates/AZZURE-104-HQ-Certificate.pdf',
+    description: `After AWS, the obvious next move was to break my single cloud thinking. Real federal environments rarely live on just one cloud, and the compliance work I do increasingly spans hybrid and multi cloud deployments where the controls implemented on AWS look meaningfully different from the same controls implemented on Azure. The AZ-104 pushed me into Microsoft's ecosystem on its own terms, teaching me how Entra ID handles identity, how virtual networks and storage are structured, how Azure Policy enforces governance, and how administrators secure and operate large environments at scale. Passing the exam gave me the second pillar of a multi cloud foundation and reinforced something I now apply constantly in my A&A work, which is that the same NIST control can produce very different evidence depending on which cloud platform you are assessing.`,
   },
   {
     name:    'Google Project Management Professional Certificate',
@@ -49,6 +53,7 @@ const activeCerts: {
     issuer:  'Google',
     period:  'June 2026 – Present',
     pdfUrl:  null,
+    description: `Cybersecurity programs do not deliver themselves. The further I moved into senior GRC and A&A work, the more I saw that the analysts who get programs across the finish line are the ones who can run them like project managers, not just execute them like contributors. I pursued the Google Project Management certification as the structured foundation for that skill set and as my first formal step toward the PMI Project Management Professional (PMP) credential. The program covered project initiation, planning, execution, monitoring and controlling, and closing across both traditional and agile methodologies, and gave me the framework I now apply to managing JCAM rollouts, ISCM strategy implementation, and IT modernization deliverables. It also gave me the contact hours and theoretical grounding needed to prepare for the PMP exam, which is my next certification target.`,
   },
 ]
 
@@ -211,11 +216,11 @@ function CertModal({
                       <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 20, color: T, margin: '0 0 8px' }}>
                         {c.name}
                       </h3>
-                      <p className="cert-meta-line" style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
+                      <p className="cert-meta-line" style={{ fontFamily: 'monospace', fontSize: 12, color: A, margin: '0 0 16px' }}>
                         {c.code ? `Code: ${c.code} · ` : ''}Issuer: {c.issuer} · Period: {c.period}
                       </p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: '0 0 20px' }}>
-                        {'// TODO — Write your personal description here: Describe why you pursued this certification, what you learned during the process, and how you apply these skills in your GRC and A&A work professionally.'}
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: T, lineHeight: 1.7, margin: '0 0 20px' }}>
+                        {c.description}
                       </p>
                       <button
                         onClick={(e) => {
