@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { splashState } from '@/lib/splashState'
 import {
   SIGNATURE_PATH_D,
@@ -42,6 +42,12 @@ import {
 ───────────────────────────────────────────────────────────── */
 export default function Splash() {
   const router = useRouter()
+  const pathname = usePathname()
+  // Skip the cinematic intro entirely on /dashboard* routes. The splash is
+  // rendered from the root layout so it mounts on every direct URL load —
+  // without this guard, hitting /dashboard or /dashboard/login fresh would
+  // play the intro and kidnap the user to /home before the page even paints.
+  const skipSplash = pathname?.startsWith('/dashboard') ?? false
   const [mounted, setMounted] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
@@ -68,6 +74,7 @@ export default function Splash() {
 
   useEffect(() => {
     if (!mounted) return
+    if (skipSplash) return
 
     // Mark shown immediately so ShellWrapper's gate keeps /home mounted
     splashState.markShown()
@@ -127,7 +134,7 @@ export default function Splash() {
   // <video> element. Small "loop snap" cosmetic trade-off in exchange
   // for buttery smooth playback throughout the splash.
 
-  if (!mounted || splashDone) return null
+  if (!mounted || splashDone || skipSplash) return null
 
   return createPortal(
     <div

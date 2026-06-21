@@ -28,5 +28,8 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  // Match bare /dashboard AND every nested path. `:path*` should match the
+  // empty-segment case but path-to-regexp behavior varies across versions,
+  // so we list both patterns defensively.
+  matcher: ['/dashboard', '/dashboard/:path*'],
 }
