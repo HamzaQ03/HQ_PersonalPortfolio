@@ -191,9 +191,103 @@ export async function POST(req: NextRequest) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Admin notification email — pastel gradient design matching the
-// other transactional emails on the portfolio (resume access,
-// review approval/decline).
+// User-facing thank-you email — mirrors the resume-access
+// approval email design exactly: 720px pastel gradient outer
+// div, Georgia serif body, no inner card. 3 outlined buttons
+// (Portfolio / LinkedIn / Book a Meeting) — no primary CTA
+// since there's no resume download to anchor on. Signature
+// block + dashed-rule footer match resume-access verbatim.
+// ─────────────────────────────────────────────────────────────
+function buildUserThankYouEmail(firstName: string): string {
+  return `
+<div style="font-family: Georgia, serif; max-width: 720px; margin: 0 auto; padding: 48px 32px; background: #ddd2cf; background: linear-gradient(135deg, #e8e6f0 0%, #ddd2cf 50%, #c9b4b0 100%); color: #2a2a2a; line-height: 1.7;">
+
+  <!-- Greeting -->
+  <div style="font-size: 18px; margin-bottom: 24px; color: #2a2a2a;">
+    Hi ${escape(firstName)},
+  </div>
+
+  <!-- Opening paragraph -->
+  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin-bottom: 28px;">
+    Thank you for taking the time to reach out. Your message has safely landed in my inbox and I read every one personally. I'll get back to you within 48 hours, often sooner.
+  </div>
+
+  <!-- 3-button horizontal layout — table layout for max email-client
+       compatibility (Gmail / Outlook / Apple Mail all honor it). -->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 32px 0; border-collapse: separate; border-spacing: 4px 0;">
+    <tr>
+      <td style="width: 33.33%;">
+        <a href="https://hamzaqureshi.dev" style="display: block; background: rgba(255,255,255,0.6); color: #2a2a2a; border: 1px solid #2a2a2a; padding: 11px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 13px; text-decoration: none;">
+          Portfolio
+        </a>
+      </td>
+      <td style="width: 33.33%;">
+        <a href="https://linkedin.com/in/hamza-qureshi-cybersec-professional" style="display: block; background: rgba(255,255,255,0.6); color: #2a2a2a; border: 1px solid #2a2a2a; padding: 11px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 13px; text-decoration: none;">
+          LinkedIn
+        </a>
+      </td>
+      <td style="width: 33.33%;">
+        <a href="https://calendly.com/hamza-qureshi/30min" style="display: block; background: rgba(255,255,255,0.6); color: #2a2a2a; border: 1px solid #2a2a2a; padding: 11px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 13px; text-decoration: none;">
+          Book a Meeting
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Resource framing paragraph -->
+  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin: 32px 0 20px 0;">
+    In the meantime, the portfolio shows how I think, LinkedIn keeps the receipts, and the booking page is open if you'd like to put a conversation on the calendar.
+  </div>
+
+  <!-- Reply line -->
+  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin: 20px 0 32px 0;">
+    If anything else comes to mind, just reply to this email — it routes directly to me.
+  </div>
+
+  <!-- Sign-off -->
+  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin-top: 28px;">
+    Looking forward to our conversation.
+  </div>
+
+  <!-- Best regards -->
+  <div style="font-size: 15px; color: #2a2a2a; margin-top: 24px;">
+    Best regards,
+  </div>
+
+  <!-- Signature block -->
+  <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(42,42,42,0.3);">
+    <div style="font-family: Georgia, serif; font-size: 16px; color: #2a2a2a; font-weight: 500;">
+      Hamza Qureshi
+    </div>
+    <div style="font-family: Georgia, serif; font-size: 14px; color: #2a2a2a; margin-top: 4px;">
+      Senior Cybersecurity Consultant
+    </div>
+    <div style="font-family: Georgia, serif; font-size: 13px; color: #2a2a2a; margin-top: 6px;">
+      AWS SAA-C03 | AZ-104 | Security+
+    </div>
+    <div style="font-family: Georgia, serif; font-size: 13px; color: #2a2a2a; margin-top: 12px;">
+      Email: <a href="mailto:contact@hamzaqureshi.dev" style="color: #5a4f6e; text-decoration: none;">contact@hamzaqureshi.dev</a>
+    </div>
+    <div style="font-family: Georgia, serif; font-size: 13px; color: #2a2a2a; margin-top: 4px;">
+      Phone: +1 (240) 869-0210
+    </div>
+  </div>
+
+  <!-- Automated email disclaimer footer -->
+  <div style="margin-top: 32px; padding-top: 16px; border-top: 1px dashed rgba(42,42,42,0.3); font-family: Georgia, serif; font-size: 11px; color: rgba(42,42,42,0.6); line-height: 1.6; font-style: italic;">
+    This email was sent automatically when you submitted a message on hamzaqureshi.dev. Replies to this email will be forwarded to my direct inbox at contact@hamzaqureshi.dev.
+  </div>
+
+</div>
+  `.trim()
+}
+
+// ─────────────────────────────────────────────────────────────
+// Admin notification email — same pastel gradient / Georgia
+// / no-inner-card design as the user thank-you, but with the
+// message metadata (From / Email / Phone / Company / Message)
+// instead of the CTA row. No signature block since the admin
+// IS Hamza — he doesn't need to be signed off to himself.
 // ─────────────────────────────────────────────────────────────
 function buildAdminNotificationEmail(data: {
   fullName: string
@@ -203,149 +297,56 @@ function buildAdminNotificationEmail(data: {
   message: string
 }): string {
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>New Message — hamzaqureshi.dev</title>
-</head>
-<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #e8e6f0 0%, #ddd2cf 50%, #c9b4b0 100%); font-family: Georgia, 'Times New Roman', serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background: #f5f1ea; border: 1px solid #c8a87c; border-radius: 4px; box-shadow: 0 8px 28px rgba(0,0,0,0.15);">
-          <tr>
-            <td style="padding: 36px 40px 28px;">
-              <p style="margin: 0 0 6px; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; color: #8b7a55; text-transform: uppercase;">
-                Portfolio · Direct Message
-              </p>
-              <h1 style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 22px; font-weight: 400; color: #1a1410; letter-spacing: 0.5px;">
-                A new message has arrived.
-              </h1>
-              <hr style="border: none; border-top: 1px solid rgba(200,168,124,0.4); margin: 0 0 24px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 0 0 24px;">
-                <tr><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #4a3f2a; width: 110px;">From:</td><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #1a1410;"><strong>${escape(data.fullName)}</strong></td></tr>
-                <tr><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #4a3f2a;">Email:</td><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px;"><a href="mailto:${escape(data.email)}" style="color: #1a1410; text-decoration: underline;">${escape(data.email)}</a></td></tr>
-                ${data.phone ? `<tr><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #4a3f2a;">Phone:</td><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #1a1410;">${escape(data.phone)}</td></tr>` : ''}
-                ${data.company ? `<tr><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #4a3f2a;">Company:</td><td style="padding: 6px 0; font-family: Georgia, serif; font-size: 14px; color: #1a1410;">${escape(data.company)}</td></tr>` : ''}
-              </table>
-              <p style="margin: 0 0 8px; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 1.5px; color: #8b7a55; text-transform: uppercase;">
-                Message
-              </p>
-              <div style="padding: 16px 20px; background: #ede5d6; border-left: 3px solid #c8a87c; font-family: Georgia, serif; font-size: 14px; color: #1a1410; line-height: 1.7; white-space: pre-wrap;">
-${escape(data.message)}
-              </div>
-              <p style="margin: 24px 0 0; font-family: Georgia, serif; font-style: italic; font-size: 12px; color: #6b5a3a;">
-                Reply directly to this email to respond — the reply-to header is set to the sender's address.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 18px 40px; background: rgba(200,168,124,0.15); border-top: 1px solid rgba(200,168,124,0.3); border-radius: 0 0 4px 4px;">
-              <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 1.5px; color: #6b5a3a; text-align: center; text-transform: uppercase;">
-                Automated · hamzaqureshi.dev · Direct Message
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `.trim()
-}
+<div style="font-family: Georgia, serif; max-width: 720px; margin: 0 auto; padding: 48px 32px; background: #ddd2cf; background: linear-gradient(135deg, #e8e6f0 0%, #ddd2cf 50%, #c9b4b0 100%); color: #2a2a2a; line-height: 1.7;">
 
-// ─────────────────────────────────────────────────────────────
-// User-facing thank-you email — same pastel gradient template,
-// 3 outlined CTA buttons (Portfolio, Schedule Meeting, LinkedIn)
-// and the standard signature block.
-// ─────────────────────────────────────────────────────────────
-function buildUserThankYouEmail(firstName: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Thank you for your message</title>
-</head>
-<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #e8e6f0 0%, #ddd2cf 50%, #c9b4b0 100%); font-family: Georgia, 'Times New Roman', serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; padding: 32px 16px;">
+  <!-- Headline -->
+  <div style="font-size: 22px; margin-bottom: 8px; color: #2a2a2a; font-weight: 500;">
+    A new message has arrived.
+  </div>
+  <div style="font-size: 13px; margin-bottom: 28px; color: rgba(42,42,42,0.65); font-style: italic;">
+    Submitted via the Send a Message form on hamzaqureshi.dev.
+  </div>
+
+  <!-- Metadata table -->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 24px 0 8px 0; border-collapse: collapse;">
     <tr>
-      <td align="center">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background: #f5f1ea; border: 1px solid #c8a87c; border-radius: 4px; box-shadow: 0 8px 28px rgba(0,0,0,0.15);">
-          <tr>
-            <td style="padding: 40px 40px 28px;">
-              <p style="margin: 0 0 6px; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 2px; color: #8b7a55; text-transform: uppercase;">
-                Hamza Qureshi · Portfolio
-              </p>
-              <h1 style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 24px; font-weight: 400; color: #1a1410; letter-spacing: 0.5px;">
-                Thanks for your message.
-              </h1>
-              <p style="margin: 0 0 18px; font-family: Georgia, serif; font-size: 15px; line-height: 1.7; color: #2a2418;">
-                Hi ${escape(firstName)},
-              </p>
-              <p style="margin: 0 0 18px; font-family: Georgia, serif; font-size: 15px; line-height: 1.7; color: #2a2418;">
-                Your message has safely landed in my inbox, thank you for taking the time to reach out. I read every message personally and will get back to you within 48 hours, or maybe even sooner.
-              </p>
-              <p style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 15px; line-height: 1.7; color: #2a2418;">
-                In the meantime, feel free to explore the rest of the portfolio, schedule a meeting directly on my calendar, or connect with me on LinkedIn using the resources below. If anything else comes to mind, please feel free to reply to this email and it will route directly to me.
-              </p>
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 8px 0 28px;">
-                <tr>
-                  <td style="padding: 4px 0;">
-                    <a href="https://hamzaqureshi.dev" target="_blank" style="display: block; background: transparent; color: #2a2a2a; border: 1px solid #2a2a2a; padding: 13px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 14px; text-decoration: none;">
-                      ↗ Explore the Portfolio
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 4px 0;">
-                    <a href="https://calendly.com/hamza-qureshi/30min" target="_blank" style="display: block; background: transparent; color: #2a2a2a; border: 1px solid #2a2a2a; padding: 13px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 14px; text-decoration: none;">
-                      ↗ Schedule a Meeting
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 4px 0;">
-                    <a href="https://linkedin.com/in/hamza-qureshi-cybersec-professional" target="_blank" style="display: block; background: transparent; color: #2a2a2a; border: 1px solid #2a2a2a; padding: 13px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 14px; text-decoration: none;">
-                      ↗ Connect on LinkedIn
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 0 0 6px; font-family: Georgia, serif; font-size: 15px; line-height: 1.7; color: #2a2418;">
-                Looking forward to our conversation.
-              </p>
-              <p style="margin: 18px 0 4px; font-family: Georgia, serif; font-size: 15px; color: #2a2418;">
-                Best regards,
-              </p>
-              <p style="margin: 0 0 4px; font-family: Georgia, serif; font-size: 16px; font-weight: 700; color: #1a1410;">
-                Hamza Qureshi
-              </p>
-              <p style="margin: 0 0 4px; font-family: Georgia, serif; font-size: 13px; color: #4a3f2a;">
-                Senior Cybersecurity Consultant
-              </p>
-              <p style="margin: 0 0 4px; font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 0.5px; color: #6b5a3a;">
-                AWS SAA-C03 | AZ-104 | Security+
-              </p>
-              <p style="margin: 8px 0 4px; font-family: Georgia, serif; font-size: 13px; color: #4a3f2a;">
-                <a href="mailto:contact@hamzaqureshi.dev" style="color: #4a3f2a; text-decoration: none;">contact@hamzaqureshi.dev</a> · 240-869-0210
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 18px 40px; background: rgba(200,168,124,0.15); border-top: 1px solid rgba(200,168,124,0.3); border-radius: 0 0 4px 4px;">
-              <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 1.5px; color: #6b5a3a; text-align: center; text-transform: uppercase;">
-                Automated · Sent from hamzaqureshi.dev · Reply to reach Hamza directly
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
+      <td style="padding: 6px 0; font-size: 14px; color: rgba(42,42,42,0.7); width: 110px;">From:</td>
+      <td style="padding: 6px 0; font-size: 15px; color: #2a2a2a; font-weight: 500;">${escape(data.fullName)}</td>
     </tr>
+    <tr>
+      <td style="padding: 6px 0; font-size: 14px; color: rgba(42,42,42,0.7);">Email:</td>
+      <td style="padding: 6px 0; font-size: 15px;"><a href="mailto:${escape(data.email)}" style="color: #5a4f6e; text-decoration: underline;">${escape(data.email)}</a></td>
+    </tr>
+    ${data.phone ? `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: rgba(42,42,42,0.7);">Phone:</td>
+      <td style="padding: 6px 0; font-size: 15px; color: #2a2a2a;">${escape(data.phone)}</td>
+    </tr>` : ''}
+    ${data.company ? `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: rgba(42,42,42,0.7);">Company:</td>
+      <td style="padding: 6px 0; font-size: 15px; color: #2a2a2a;">${escape(data.company)}</td>
+    </tr>` : ''}
   </table>
-</body>
-</html>
+
+  <!-- Message body label -->
+  <div style="font-size: 14px; color: rgba(42,42,42,0.7); margin: 28px 0 8px 0;">
+    Message:
+  </div>
+
+  <!-- Message body in a quoted block -->
+  <div style="padding: 16px 20px; background: rgba(255,255,255,0.45); border-left: 3px solid #2a2a2a; font-family: Georgia, serif; font-size: 15px; color: #2a2a2a; line-height: 1.7; white-space: pre-wrap;">
+${escape(data.message)}
+  </div>
+
+  <!-- Reply note -->
+  <div style="font-size: 14px; line-height: 1.7; color: #2a2a2a; margin-top: 28px; font-style: italic;">
+    Reply directly to this email to respond — the reply-to header is set to the sender's address.
+  </div>
+
+  <!-- Automated email disclaimer footer -->
+  <div style="margin-top: 32px; padding-top: 16px; border-top: 1px dashed rgba(42,42,42,0.3); font-family: Georgia, serif; font-size: 11px; color: rgba(42,42,42,0.6); line-height: 1.6; font-style: italic;">
+    Automated notification from hamzaqureshi.dev · Direct Message form.
+  </div>
+
+</div>
   `.trim()
 }
