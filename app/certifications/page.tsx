@@ -216,10 +216,10 @@ function CertModal({
                       <h3 style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 700, fontSize: 20, color: T, margin: '0 0 8px' }}>
                         {c.name}
                       </h3>
-                      <p className="cert-meta-line" style={{ fontFamily: 'monospace', fontSize: 12, color: TM, margin: '0 0 16px' }}>
+                      <p className="cert-meta-line" style={{ fontFamily: 'monospace', fontSize: 12, color: A, margin: '0 0 16px' }}>
                         {c.code ? `Code: ${c.code} · ` : ''}Issuer: {c.issuer} · Period: {c.period}
                       </p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: TM, lineHeight: 1.7, margin: '0 0 20px' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: T, lineHeight: 1.7, margin: '0 0 20px' }}>
                         {c.description}
                       </p>
                       <button
