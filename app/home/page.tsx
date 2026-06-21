@@ -40,15 +40,19 @@ export default function HomePage() {
       return
     }
 
-    const originalHtml = document.documentElement.style.overflow
-    const originalBody = document.body.style.overflow
-
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
 
+    // Cleanup unconditionally clears the overflow lock instead of restoring a
+    // snapshot. When this effect first runs, the splash overlay has already
+    // set body.overflow = 'hidden' for its own scroll lock — so capturing
+    // and restoring that snapshot would persist 'hidden' onto every page
+    // the user navigates to next (Skills, Reviews, etc.), permanently
+    // blocking trackpad scroll. No other route in the app wants the body
+    // scroll-locked, so '' is the right restored value.
     return () => {
-      document.documentElement.style.overflow = originalHtml
-      document.body.style.overflow = originalBody
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
     }
   }, [])
 
