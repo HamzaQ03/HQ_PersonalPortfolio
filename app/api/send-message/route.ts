@@ -209,12 +209,17 @@ function buildUserThankYouEmail(firstName: string): string {
 
   <!-- Opening paragraph -->
   <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin-bottom: 28px;">
-    Thank you for taking the time to reach out. Your message has safely landed in my inbox and I read every one personally. I'll get back to you within 48 hours, often sooner.
+    Thank you for taking the time to reach out. Your message has safely landed in my inbox. I will get back to you within 48 hours, often sooner as I read every single message personally.
+  </div>
+
+  <!-- Buttons intro -->
+  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin-bottom: 24px;">
+    In the meantime, feel free to explore my portfolio further, connect with me on LinkedIn, or book a meeting directly on my calendar to continue this conversation using the resources below.
   </div>
 
   <!-- 3-button horizontal layout — table layout for max email-client
        compatibility (Gmail / Outlook / Apple Mail all honor it). -->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 32px 0; border-collapse: separate; border-spacing: 4px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 0 0 32px 0; border-collapse: separate; border-spacing: 4px 0;">
     <tr>
       <td style="width: 33.33%;">
         <a href="https://hamzaqureshi.dev" style="display: block; background: rgba(255,255,255,0.6); color: #2a2a2a; border: 1px solid #2a2a2a; padding: 11px 8px; border-radius: 2px; text-align: center; font-family: Georgia, serif; font-size: 13px; text-decoration: none;">
@@ -234,14 +239,9 @@ function buildUserThankYouEmail(firstName: string): string {
     </tr>
   </table>
 
-  <!-- Resource framing paragraph -->
-  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin: 32px 0 20px 0;">
-    In the meantime, the portfolio shows how I think, LinkedIn keeps the receipts, and the booking page is open if you'd like to put a conversation on the calendar.
-  </div>
-
   <!-- Reply line -->
-  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin: 20px 0 32px 0;">
-    If anything else comes to mind, just reply to this email — it routes directly to me.
+  <div style="font-size: 15px; line-height: 1.7; color: #2a2a2a; margin: 0 0 32px 0;">
+    If anything else comes to mind, feel free to reply to this email.
   </div>
 
   <!-- Sign-off -->
