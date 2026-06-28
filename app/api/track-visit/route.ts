@@ -34,11 +34,21 @@ export async function POST(req: Request) {
     const host        = req.headers.get('host') || ''
     const cleanReferrer = referrer.includes(host) ? 'direct' : referrer
 
-    await supabase.from('visits').insert({
+    const { error: insertError } = await supabase.from('visits').insert({
       page, country, city, device, browser,
       referrer: cleanReferrer,
       ip,
     })
+
+    if (insertError) {
+      console.error('[track-visit] Supabase insert failed:', {
+        code: insertError.code,
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint,
+        page,
+      })
+    }
 
     // Auto cleanup every 1000 visits
     const { count } = await supabase
@@ -49,7 +59,8 @@ export async function POST(req: Request) {
     }
 
     return Response.json({ success: true })
-  } catch {
+  } catch (err) {
+    console.error('[track-visit] Unexpected error:', err)
     return Response.json({ success: false })
   }
 }

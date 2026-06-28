@@ -50,12 +50,21 @@ export async function GET(
     )
     const fileBuffer = await readFile(filePath)
 
-    // Track download (best-effort, don't block on failure)
+    // Track download (best-effort, don't block on failure). Log any
+    // error so a silent regression on the tracking column gets caught.
     supabase
       .from('resume_access_requests')
       .update({ downloaded_at: now.toISOString() })
       .eq('id', request.id)
-      .then(() => {})
+      .then(({ error }) => {
+        if (error) {
+          console.error('[resume-download] Download-tracking update failed:', {
+            code: error.code,
+            message: error.message,
+            id: request.id,
+          })
+        }
+      })
 
     return new NextResponse(fileBuffer, {
       status: 200,

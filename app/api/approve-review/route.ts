@@ -207,6 +207,11 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   if (fetchError) {
+    console.error('[approve-review] Supabase fetch failed:', {
+      code: fetchError.code,
+      message: fetchError.message,
+      id,
+    })
     return pageHtml({
       status: 500,
       title: '500 — Database Error',
@@ -241,6 +246,11 @@ export async function GET(request: NextRequest) {
     .eq('id', id)
 
   if (error) {
+    console.error('[approve-review] Supabase update failed:', {
+      code: error.code,
+      message: error.message,
+      id,
+    })
     return pageHtml({
       status: 500,
       title: '500 — Database Error',
@@ -259,7 +269,7 @@ export async function GET(request: NextRequest) {
     const thankYouHtml = buildReviewerApprovedEmail({ firstName })
 
     try {
-      await fetch('https://api.resend.com/emails', {
+      const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -273,6 +283,13 @@ export async function GET(request: NextRequest) {
           html: thankYouHtml,
         }),
       })
+      if (!resendRes.ok) {
+        const errText = await resendRes.text().catch(() => '<unreadable>')
+        console.error('[approve-review] Resend non-OK response:', {
+          status: resendRes.status,
+          text: errText,
+        })
+      }
     } catch (emailError) {
       console.error('[approve-review] Failed to send thank-you email:', emailError)
     }

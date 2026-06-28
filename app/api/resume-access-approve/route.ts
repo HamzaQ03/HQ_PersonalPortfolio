@@ -121,6 +121,13 @@ export async function GET(req: NextRequest) {
     .single()
 
   if (fetchError || !request) {
+    if (fetchError) {
+      console.error('[resume-access-approve] Supabase fetch failed:', {
+        code: fetchError.code,
+        message: fetchError.message,
+        id,
+      })
+    }
     return pageHtml({
       status: 404,
       title: '404 — Request Not Found',
@@ -161,6 +168,11 @@ export async function GET(req: NextRequest) {
     .eq('id', id)
 
   if (updateError) {
+    console.error('[resume-access-approve] Supabase update failed:', {
+      code: updateError.code,
+      message: updateError.message,
+      id,
+    })
     return pageHtml({
       status: 500,
       title: '500 — Database Error',
@@ -186,7 +198,7 @@ export async function GET(req: NextRequest) {
     })
 
     try {
-      await fetch('https://api.resend.com/emails', {
+      const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${resendKey}`,
@@ -200,6 +212,13 @@ export async function GET(req: NextRequest) {
           html: applicantHtml,
         }),
       })
+      if (!resendRes.ok) {
+        const errText = await resendRes.text().catch(() => '<unreadable>')
+        console.error('[resume-access-approve] Resend non-OK response:', {
+          status: resendRes.status,
+          text: errText,
+        })
+      }
     } catch (err) {
       console.error('[resume-access-approve] Email failed:', err)
     }

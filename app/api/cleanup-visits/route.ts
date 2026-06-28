@@ -18,6 +18,7 @@ export async function GET() {
     if (error) throw error
     return Response.json({ success: true, message: 'Visits older than 1 year deleted' })
   } catch (error) {
+    console.error('[cleanup-visits] Failed:', error)
     return Response.json({ success: false, error }, { status: 500 })
   }
 }

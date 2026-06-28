@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
       })
 
       try {
-        await fetch('https://api.resend.com/emails', {
+        const resendRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${resendKey}`,
@@ -147,6 +147,13 @@ export async function POST(req: NextRequest) {
             html: adminHtml,
           }),
         })
+        if (!resendRes.ok) {
+          const errText = await resendRes.text().catch(() => '<unreadable>')
+          console.error('[resume-access] Resend non-OK response:', {
+            status: resendRes.status,
+            text: errText,
+          })
+        }
       } catch (err) {
         console.error('[resume-access] Admin email failed:', err)
       }

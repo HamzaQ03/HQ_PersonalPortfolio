@@ -197,6 +197,11 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   if (fetchError) {
+    console.error('[reject-review] Supabase fetch failed:', {
+      code: fetchError.code,
+      message: fetchError.message,
+      id,
+    })
     return pageHtml({
       status: 500,
       title: '500 — Database Error',
@@ -221,6 +226,11 @@ export async function GET(request: NextRequest) {
     .eq('id', id)
 
   if (error) {
+    console.error('[reject-review] Supabase delete failed:', {
+      code: error.code,
+      message: error.message,
+      id,
+    })
     return pageHtml({
       status: 500,
       title: '500 — Database Error',
@@ -238,7 +248,7 @@ export async function GET(request: NextRequest) {
     const declineHtml = buildReviewerDeclinedEmail({ firstName })
 
     try {
-      await fetch('https://api.resend.com/emails', {
+      const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -252,6 +262,13 @@ export async function GET(request: NextRequest) {
           html: declineHtml,
         }),
       })
+      if (!resendRes.ok) {
+        const errText = await resendRes.text().catch(() => '<unreadable>')
+        console.error('[reject-review] Resend non-OK response:', {
+          status: resendRes.status,
+          text: errText,
+        })
+      }
     } catch (emailError) {
       console.error('[reject-review] Failed to send decline email:', emailError)
     }
