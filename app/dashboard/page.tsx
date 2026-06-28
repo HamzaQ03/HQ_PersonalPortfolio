@@ -3,16 +3,29 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Visit = {
+type Session = {
   id: string
-  page: string
-  country: string | null
-  city: string | null
-  device: string | null
+  visitor_id: string
+  started_at: string
+  last_activity: string
+  visit_number: number
+  location: string | null
+  isp: string | null
+  timezone: string | null
+  language: string | null
+  os: string | null
   browser: string | null
-  referrer: string | null
+  device: string | null
   ip: string | null
-  created_at: string
+  referrer: string | null
+  clicks: Array<{ target: string; page: string; at: string }> | null
+}
+
+type PageView = {
+  id: string
+  session_id: string
+  page: string
+  viewed_at: string
 }
 
 type Review = {
@@ -55,7 +68,6 @@ type Tab = 'visits' | 'reviews' | 'messages' | 'resume'
 const T    = '#f0f0f0'
 const A    = '#c8a87c'
 const TM   = '#666677'
-const ROWS = 50
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function relativeTime(iso: string): string {
@@ -69,125 +81,17 @@ function relativeTime(iso: string): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
-function topByField(data: Visit[], field: keyof Visit): string {
-  const counts: Record<string, number> = {}
-  data.forEach(v => { const val = v[field] || 'Unknown'; counts[val] = (counts[val] || 0) + 1 })
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
-}
-
-function startOfDay(): Date {
-  const d = new Date(); d.setHours(0, 0, 0, 0); return d
-}
-
-function startOfWeek(): Date {
-  const d = new Date(); d.setDate(d.getDate() - 7); d.setHours(0, 0, 0, 0); return d
-}
-
-function startOfMonth(): Date {
-  const d = new Date(); d.setDate(d.getDate() - 30); d.setHours(0, 0, 0, 0); return d
-}
-
-// ── Skeleton card ──────────────────────────────────────────────────────────────
-function SkeletonCard() {
-  return (
-    <div style={{
-      background:   'rgba(10,10,10,0.8)',
-      border:       '1px solid rgba(200,168,124,0.15)',
-      borderRadius: 12,
-      padding:      24,
-    }}>
-      <style>{`
-        @keyframes db-shimmer {
-          0%   { background-position: -200% 0; }
-          100% { background-position:  200% 0; }
-        }
-        .db-shimmer {
-          background: linear-gradient(90deg,
-            rgba(200,168,124,0.05) 25%,
-            rgba(200,168,124,0.10) 50%,
-            rgba(200,168,124,0.05) 75%);
-          background-size: 200% 100%;
-          animation: db-shimmer 1.5s ease-in-out infinite;
-          border-radius: 6px;
-        }
-      `}</style>
-      <div className="db-shimmer" style={{ height: 36, width: '60%', marginBottom: 10 }} />
-      <div className="db-shimmer" style={{ height: 10, width: '40%' }} />
-    </div>
-  )
-}
-
-// ── Stat card ──────────────────────────────────────────────────────────────────
-function StatCard({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div style={{
-      background:   'rgba(10,10,10,0.8)',
-      border:       '1px solid rgba(200,168,124,0.15)',
-      borderRadius: 12,
-      padding:      '20px 24px',
-      flex:         1,
-    }}>
-      <p style={{
-        fontFamily:    'var(--font-space-grotesk)',
-        fontWeight:    700,
-        fontSize:      32,
-        color:         T,
-        margin:        0,
-        letterSpacing: 1,
-        lineHeight:    1.1,
-        wordBreak:     'break-all',
-      }}>{value}</p>
-      <p style={{
-        fontFamily:    'monospace',
-        fontSize:      10,
-        color:         'rgba(200,168,124,0.6)',
-        letterSpacing: 2,
-        margin:        '6px 0 0',
-      }}>{label}</p>
-    </div>
-  )
-}
-
-// ── Filter button ──────────────────────────────────────────────────────────────
-function FilterBtn({
-  active, onClick, children,
-}: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        fontFamily:    'monospace',
-        fontSize:      10,
-        letterSpacing: 1,
-        padding:       '5px 12px',
-        borderRadius:  6,
-        border:        `1px solid ${active ? A : 'rgba(200,168,124,0.2)'}`,
-        background:    active ? 'rgba(200,168,124,0.12)' : 'transparent',
-        color:         active ? A : TM,
-        transition:    'all 150ms',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
 
 // ── Main dashboard (access gated by middleware.ts) ─────────────────────────────
 function DashboardInner() {
-  const [visits,    setVisits]    = useState<Visit[]>([])
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [pageViewsBySession, setPageViewsBySession] = useState<Record<string, PageView[]>>({})
+  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null)
   const [reviews,   setReviews]   = useState<Review[]>([])
   const [messages,  setMessages]  = useState<Message[]>([])
   const [resumeReqs, setResumeReqs] = useState<ResumeRequest[]>([])
   const [activeTab, setActiveTab] = useState<Tab>('visits')
-  const [loading,   setLoading]   = useState(true)
   const [clock,     setClock]     = useState('')
-  const [page,      setPage]      = useState(0)
-
-  // Filters
-  const [fPage,    setFPage]    = useState('all')
-  const [fCountry, setFCountry] = useState('all')
-  const [fDevice,  setFDevice]  = useState('all')
-  const [fDate,    setFDate]    = useState<'today'|'week'|'month'|'all'>('all')
 
   // ── Live clock ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -197,99 +101,80 @@ function DashboardInner() {
     return () => clearInterval(t)
   }, [])
 
-  // ── Fetch data ───────────────────────────────────────────────────────────────
-  const fetchData = useCallback(async () => {
-    const { data } = await supabase
-      .from('visits')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (data) setVisits(data as Visit[])
-    setLoading(false)
+  // ── Fetch all four data sources ──────────────────────────────────────────────
+  // Each fetch is independent — if one table doesn't exist or RLS blocks it,
+  // the others still load. Errors are logged but don't crash the tab.
+  const fetchAll = useCallback(async () => {
+    try {
+      const { data: sessionRows } = await supabase
+        .from('sessions')
+        .select('*')
+        .order('started_at', { ascending: false })
+        .limit(100)
+      if (sessionRows) setSessions(sessionRows as Session[])
+    } catch (err) {
+      console.error('[dashboard] sessions fetch failed:', err)
+    }
+
+    try {
+      const { data: pvRows } = await supabase
+        .from('page_views')
+        .select('*')
+        .order('viewed_at', { ascending: true })
+        .limit(1000)
+      if (pvRows) {
+        const grouped: Record<string, PageView[]> = {}
+        for (const pv of pvRows as PageView[]) {
+          if (!grouped[pv.session_id]) grouped[pv.session_id] = []
+          grouped[pv.session_id].push(pv)
+        }
+        setPageViewsBySession(grouped)
+      }
+    } catch (err) {
+      console.error('[dashboard] page_views fetch failed:', err)
+    }
+
+    try {
+      const { data } = await supabase
+        .from('reviews')
+        .select('id, created_at, name, reviewer_email, profession, company, connection, rating, review_text, approved, recommendation_letter_url')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (data) setReviews(data as Review[])
+    } catch (err) {
+      console.error('[dashboard] reviews fetch failed:', err)
+    }
+
+    try {
+      const { data } = await supabase
+        .from('portfolio_direct_messages')
+        .select('id, created_at, full_name, email, phone, company, message')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (data) setMessages(data as Message[])
+    } catch (err) {
+      console.error('[dashboard] messages fetch failed:', err)
+    }
+
+    try {
+      const { data } = await supabase
+        .from('resume_access_requests')
+        .select('id, created_at, full_name, email, company, reason, approved')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (data) setResumeReqs(data as ResumeRequest[])
+    } catch (err) {
+      console.error('[dashboard] resume requests fetch failed:', err)
+    }
   }, [])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { fetchAll() }, [fetchAll])
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
-    const t = setInterval(fetchData, 60_000)
+    const t = setInterval(fetchAll, 60_000)
     return () => clearInterval(t)
-  }, [fetchData])
-
-  // ── Fetch reviews / messages / resume requests ───────────────────────────────
-  // Each fetch is independent — if one table doesn't exist or RLS blocks it,
-  // the others still load. Errors are logged but don't crash the tab.
-  useEffect(() => {
-    async function fetchAll() {
-      try {
-        const { data } = await supabase
-          .from('reviews')
-          .select('id, created_at, name, reviewer_email, profession, company, connection, rating, review_text, approved, recommendation_letter_url')
-          .order('created_at', { ascending: false })
-          .limit(100)
-        if (data) setReviews(data as Review[])
-      } catch (err) {
-        console.error('[dashboard] reviews fetch failed:', err)
-      }
-
-      try {
-        const { data } = await supabase
-          .from('portfolio_direct_messages')
-          .select('id, created_at, full_name, email, phone, company, message')
-          .order('created_at', { ascending: false })
-          .limit(100)
-        if (data) setMessages(data as Message[])
-      } catch (err) {
-        console.error('[dashboard] messages fetch failed:', err)
-      }
-
-      try {
-        const { data } = await supabase
-          .from('resume_access_requests')
-          .select('id, created_at, full_name, email, company, reason, approved')
-          .order('created_at', { ascending: false })
-          .limit(100)
-        if (data) setResumeReqs(data as ResumeRequest[])
-      } catch (err) {
-        console.error('[dashboard] resume requests fetch failed:', err)
-      }
-    }
-    fetchAll()
-  }, [])
-
-  // ── Derived stats ────────────────────────────────────────────────────────────
-  const todayStart = startOfDay().getTime()
-  const weekStart  = startOfWeek().getTime()
-  const monthStart = startOfMonth().getTime()
-
-  const totalVisits   = visits.length
-  const todayVisits   = visits.filter(v => new Date(v.created_at).getTime() >= todayStart).length
-  const weekVisits    = visits.filter(v => new Date(v.created_at).getTime() >= weekStart).length
-  const topPage       = topByField(visits, 'page')
-  const topCountry    = topByField(visits, 'country')
-  const topDevice     = topByField(visits, 'device')
-
-  // ── Unique filter values ─────────────────────────────────────────────────────
-  const uniquePages     = ['all', ...Array.from(new Set(visits.map(v => v.page))).sort()]
-  const uniqueCountries = ['all', ...Array.from(new Set(visits.map(v => v.country || 'Unknown'))).sort()]
-
-  // ── Apply filters ─────────────────────────────────────────────────────────────
-  const filtered = visits.filter(v => {
-    if (fPage    !== 'all' && v.page                     !== fPage)    return false
-    if (fCountry !== 'all' && (v.country || 'Unknown')   !== fCountry) return false
-    if (fDevice  !== 'all' && (v.device  || 'Unknown')   !== fDevice)  return false
-    if (fDate === 'today' && new Date(v.created_at).getTime() < todayStart) return false
-    if (fDate === 'week'  && new Date(v.created_at).getTime() < weekStart)  return false
-    if (fDate === 'month' && new Date(v.created_at).getTime() < monthStart) return false
-    return true
-  })
-
-  // ── Pagination ───────────────────────────────────────────────────────────────
-  const totalPages = Math.ceil(filtered.length / ROWS)
-  const pageData   = filtered.slice(page * ROWS, page * ROWS + ROWS)
-
-  function clearFilters() {
-    setFPage('all'); setFCountry('all'); setFDevice('all'); setFDate('all'); setPage(0)
-  }
+  }, [fetchAll])
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: T, paddingBottom: 60 }}>
@@ -369,7 +254,7 @@ function DashboardInner() {
           paddingBottom: 12,
         }}>
           {([
-            { id: 'visits',   label: 'VISITS',           count: visits.length },
+            { id: 'visits',   label: 'SESSIONS',         count: sessions.length },
             { id: 'reviews',  label: 'REVIEWS',          count: reviews.length },
             { id: 'messages', label: 'MESSAGES',         count: messages.length },
             { id: 'resume',   label: 'RESUME REQUESTS',  count: resumeReqs.length },
@@ -418,257 +303,106 @@ function DashboardInner() {
           </button>
         </div>
 
-        {activeTab === 'visits' && (<>
+        {activeTab === 'visits' && (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {sessions.length === 0 ? (
+              <p style={{ color: TM, fontFamily: 'monospace', fontSize: 12 }}>No sessions yet.</p>
+            ) : sessions.map((s) => {
+              const expanded = expandedSessionId === s.id
+              const pages = pageViewsBySession[s.id] || []
+              const start = new Date(s.started_at).getTime()
+              const end = new Date(s.last_activity).getTime()
+              const durationMs = Math.max(0, end - start)
+              const durationMin = Math.floor(durationMs / 60000)
+              const durationSec = Math.floor((durationMs % 60000) / 1000)
+              const durationLabel = durationMin > 0 ? `${durationMin}m ${durationSec}s` : `${durationSec}s`
 
-        {/* ── Row 1: 4 stat cards ──────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-          {loading ? (
-            [0,1,2,3].map(i => <div key={i} style={{ flex: 1, minWidth: 140 }}><SkeletonCard /></div>)
-          ) : (
-            <>
-              <StatCard value={totalVisits.toLocaleString()} label="TOTAL VISITS"  />
-              <StatCard value={todayVisits.toLocaleString()} label="TODAY"         />
-              <StatCard value={topPage}                      label="TOP PAGE"      />
-              <StatCard value={topCountry}                   label="TOP COUNTRY"   />
-            </>
-          )}
-        </div>
+              return (
+                <div key={s.id} style={{
+                  padding: 14,
+                  background: 'rgba(10,10,10,0.8)',
+                  border: '1px solid rgba(200,168,124,0.2)',
+                  borderRadius: 6,
+                }}>
+                  <div
+                    onClick={() => setExpandedSessionId(expanded ? null : s.id)}
+                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
+                  >
+                    <div style={{ flex: 1, minWidth: 240 }}>
+                      <p style={{ color: T, fontSize: 13, fontWeight: 600, margin: 0 }}>
+                        Visitor #{s.visitor_id.slice(0, 6)} · Visit #{s.visit_number}
+                      </p>
+                      <p style={{ color: TM, fontSize: 11, fontFamily: 'monospace', margin: '4px 0 0' }}>
+                        {s.location || 'Unknown'} · {s.os || '—'} · {s.browser || '—'} · {s.device || '—'}
+                      </p>
+                      <p style={{ color: TM, fontSize: 10, fontFamily: 'monospace', margin: '4px 0 0' }}>
+                        {s.referrer && s.referrer !== 'direct' ? `From: ${s.referrer}` : 'Direct visit'}
+                        {s.isp && s.isp !== 'Unknown' ? ` · ISP: ${s.isp}` : ''}
+                        {s.language ? ` · ${s.language}` : ''}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right', minWidth: 120 }}>
+                      <p style={{ color: A, fontSize: 11, fontFamily: 'monospace', margin: 0 }}>
+                        {pages.length} page{pages.length === 1 ? '' : 's'} · {durationLabel}
+                      </p>
+                      <p style={{ color: TM, fontSize: 10, fontFamily: 'monospace', margin: '4px 0 0' }}>
+                        {relativeTime(s.started_at)}
+                      </p>
+                      {Array.isArray(s.clicks) && s.clicks.length > 0 && (
+                        <p style={{ color: '#22c55e', fontSize: 10, fontFamily: 'monospace', margin: '4px 0 0' }}>
+                          {s.clicks.length} click{s.clicks.length === 1 ? '' : 's'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-        {/* ── Row 2: 2 stat cards ──────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>
-          {loading ? (
-            [0,1].map(i => <div key={i} style={{ flex: 1, minWidth: 140 }}><SkeletonCard /></div>)
-          ) : (
-            <>
-              <StatCard value={weekVisits.toLocaleString()} label="THIS WEEK"   />
-              <StatCard value={topDevice}                   label="TOP DEVICE"  />
-              <div style={{ flex: 2 }} />
-            </>
-          )}
-        </div>
-
-        {/* ── Visit log table ──────────────────────────────────────────────── */}
-        <div style={{
-          background:   'rgba(10,10,10,0.8)',
-          border:       '1px solid rgba(200,168,124,0.15)',
-          borderRadius: 12,
-          overflow:     'hidden',
-        }}>
-          {/* Table header row */}
-          <div style={{
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'space-between',
-            padding:        '16px 20px',
-            borderBottom:   '1px solid rgba(200,168,124,0.1)',
-            flexWrap:       'wrap',
-            gap:            10,
-          }}>
-            <span style={{
-              fontFamily:    'var(--font-space-grotesk)',
-              fontWeight:    600,
-              fontSize:      14,
-              color:         T,
-              letterSpacing: 1,
-            }}>VISIT LOG</span>
-            <button
-              onClick={() => { setLoading(true); fetchData() }}
-              title="Refresh"
-              style={{
-                background:  'none',
-                border:      '1px solid rgba(200,168,124,0.2)',
-                borderRadius: 6,
-                color:       A,
-                fontSize:    14,
-                padding:     '4px 10px',
-                transition:  'opacity 150ms',
-              }}
-            >↺</button>
-          </div>
-
-          {/* Filters */}
-          <div style={{
-            padding:    '12px 20px',
-            borderBottom: '1px solid rgba(200,168,124,0.08)',
-            display:    'flex',
-            flexWrap:   'wrap',
-            gap:        10,
-            alignItems: 'center',
-          }}>
-            {/* Page filter */}
-            <select className="db-select" value={fPage}
-              onChange={e => { setFPage(e.target.value); setPage(0) }}>
-              {uniquePages.map(p => (
-                <option key={p} value={p}>{p === 'all' ? 'All Pages' : p}</option>
-              ))}
-            </select>
-
-            {/* Country filter */}
-            <select className="db-select" value={fCountry}
-              onChange={e => { setFCountry(e.target.value); setPage(0) }}>
-              {uniqueCountries.map(c => (
-                <option key={c} value={c}>{c === 'all' ? 'All Countries' : c}</option>
-              ))}
-            </select>
-
-            {/* Device filter */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              {(['all','Mobile','Desktop'] as const).map(d => (
-                <FilterBtn key={d} active={fDevice === d}
-                  onClick={() => { setFDevice(d); setPage(0) }}>
-                  {d === 'all' ? 'All Devices' : d}
-                </FilterBtn>
-              ))}
-            </div>
-
-            {/* Date filter */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              {([
-                { val: 'today', label: 'Today'      },
-                { val: 'week',  label: 'This Week'  },
-                { val: 'month', label: 'This Month' },
-                { val: 'all',   label: 'All Time'   },
-              ] as const).map(({ val, label }) => (
-                <FilterBtn key={val} active={fDate === val}
-                  onClick={() => { setFDate(val); setPage(0) }}>
-                  {label}
-                </FilterBtn>
-              ))}
-            </div>
-
-            {/* Clear */}
-            {(fPage !== 'all' || fCountry !== 'all' || fDevice !== 'all' || fDate !== 'all') && (
-              <button onClick={clearFilters} style={{
-                fontFamily: 'monospace', fontSize: 10, letterSpacing: 1,
-                padding: '5px 12px', borderRadius: 6,
-                border: '1px solid rgba(255,80,80,0.3)',
-                background: 'transparent', color: 'rgba(255,120,120,0.7)',
-                transition: 'all 150ms',
-              }}>✕ CLEAR</button>
-            )}
-          </div>
-
-          {/* Row count */}
-          <div style={{
-            padding:    '8px 20px',
-            borderBottom: '1px solid rgba(200,168,124,0.06)',
-            fontFamily: 'monospace',
-            fontSize:   10,
-            color:      TM,
-            letterSpacing: 1,
-          }}>
-            {loading ? 'Loading...' : filtered.length === 0
-              ? 'No visits match your filters'
-              : `Showing ${filtered.length === 0 ? 0 : page * ROWS + 1}–${Math.min((page + 1) * ROWS, filtered.length)} of ${filtered.length.toLocaleString()} visits`
-            }
-          </div>
-
-          {/* Empty state */}
-          {!loading && visits.length === 0 && (
-            <div style={{ padding: '48px 20px', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'monospace', fontSize: 13, color: TM }}>
-                No visits recorded yet. Share your portfolio to get started!
-              </p>
-            </div>
-          )}
-
-          {/* Table */}
-          {!loading && filtered.length > 0 && (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
-                <thead>
-                  <tr>
-                    {['TIME','PAGE','COUNTRY','CITY','DEVICE','BROWSER','REFERRER'].map(col => (
-                      <th key={col} style={{
-                        fontFamily:    'monospace',
-                        fontSize:      9,
-                        color:         'rgba(200,168,124,0.6)',
-                        letterSpacing: 2,
-                        textAlign:     'left',
-                        padding:       '10px 16px',
-                        borderBottom:  '1px solid rgba(200,168,124,0.1)',
-                        fontWeight:    400,
-                        whiteSpace:    'nowrap',
-                      }}>{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageData.map(v => (
-                    <tr key={v.id} className="db-row" style={{ transition: 'background 100ms' }}>
-                      <td style={{ padding: '9px 16px', borderBottom: '1px solid rgba(200,168,124,0.05)' }}>
-                        <span
-                          title={new Date(v.created_at).toLocaleString()}
-                          style={{ fontFamily: 'monospace', fontSize: 11, color: '#e0e0e0', whiteSpace: 'nowrap' }}
-                        >
-                          {relativeTime(v.created_at)}
-                        </span>
-                      </td>
-                      {[v.page, v.country||'—', v.city||'—', v.device||'—', v.browser||'—', v.referrer||'—'].map((val, i) => (
-                        <td key={i} style={{ padding: '9px 16px', borderBottom: '1px solid rgba(200,168,124,0.05)' }}>
-                          <span style={{
+                  {expanded && (
+                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(200,168,124,0.2)' }}>
+                      <p style={{ color: A, fontSize: 10, fontFamily: 'monospace', margin: '0 0 6px', letterSpacing: 1 }}>PAGES</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                        {pages.map((pv) => (
+                          <span key={pv.id} style={{
+                            padding: '3px 8px',
+                            background: 'rgba(200,168,124,0.1)',
+                            border: '1px solid rgba(200,168,124,0.3)',
+                            borderRadius: 3,
+                            color: '#d4c4a8',
                             fontFamily: 'monospace',
-                            fontSize:   11,
-                            color:      '#e0e0e0',
-                            maxWidth:   180,
-                            display:    'inline-block',
-                            overflow:   'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }} title={val}>{val}</span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                            fontSize: 10,
+                          }}>
+                            {pv.page}
+                          </span>
+                        ))}
+                      </div>
 
-          {/* Pagination */}
-          {!loading && totalPages > 1 && (
-            <div style={{
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              gap:            12,
-              padding:        '14px 20px',
-              borderTop:      '1px solid rgba(200,168,124,0.08)',
-            }}>
-              <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                style={{
-                  fontFamily: 'monospace', fontSize: 11, letterSpacing: 1,
-                  padding: '6px 16px', borderRadius: 6,
-                  border: '1px solid rgba(200,168,124,0.2)',
-                  background: 'transparent',
-                  color: page === 0 ? TM : A,
-                  opacity: page === 0 ? 0.4 : 1,
-                  transition: 'all 150ms',
-                }}
-              >← PREV</button>
-              <span style={{ fontFamily: 'monospace', fontSize: 10, color: TM, letterSpacing: 1 }}>
-                {page + 1} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
-                style={{
-                  fontFamily: 'monospace', fontSize: 11, letterSpacing: 1,
-                  padding: '6px 16px', borderRadius: 6,
-                  border: '1px solid rgba(200,168,124,0.2)',
-                  background: 'transparent',
-                  color: page >= totalPages - 1 ? TM : A,
-                  opacity: page >= totalPages - 1 ? 0.4 : 1,
-                  transition: 'all 150ms',
-                }}
-              >NEXT →</button>
-            </div>
-          )}
-        </div>
+                      {Array.isArray(s.clicks) && s.clicks.length > 0 && (
+                        <>
+                          <p style={{ color: A, fontSize: 10, fontFamily: 'monospace', margin: '0 0 6px', letterSpacing: 1 }}>CLICKS</p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {s.clicks.map((c, i) => (
+                              <span key={i} style={{
+                                padding: '3px 8px',
+                                background: 'rgba(34,197,94,0.1)',
+                                border: '1px solid rgba(34,197,94,0.3)',
+                                borderRadius: 3,
+                                color: '#86efac',
+                                fontFamily: 'monospace',
+                                fontSize: 10,
+                              }}>
+                                {c.target} · {c.page}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
 
-        </>)}
 
         {/* ── Reviews tab ─────────────────────────────────────────────────── */}
         {activeTab === 'reviews' && (
