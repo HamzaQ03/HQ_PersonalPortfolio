@@ -94,7 +94,7 @@ const MENTORS = [
     title:      'Senior Project Manager',
     company:    'Triple Point Security (NIH Contract)',
     connection: 'Colleague / Peer',
-    quote:      'Review coming soon.',
+    quote:      `Hamza has consistently demonstrated the technical depth, professional maturity, and work ethic that I look for in top-tier consultants. From day one, he approached his role with an unusual level of ownership. He quickly became a trusted contributor across multiple workstreams, including Risk Management Framework (RMF) lifecycle execution, ATO package development, and continuous monitoring initiatives. What sets Hamza apart is his ability to move fluidly between deeply technical compliance work and strategic project coordination, a rare combination at his career stage. He handles competing priorities with remarkable composure. Any organization that brings him on will be gaining a driven, ethical, and highly capable cybersecurity professional.`,
   },
   {
     name:       'Robert Wilkinson',

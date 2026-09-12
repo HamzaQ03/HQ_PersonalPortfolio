@@ -55,6 +55,14 @@ const activeCerts: {
     pdfUrl:  null,
     description: `Cybersecurity programs do not deliver themselves. The further I moved into senior GRC and A&A work, the more I saw that the analysts who get programs across the finish line are the ones who can run them like project managers, not just execute them like contributors. I pursued the Google Project Management certification as the structured foundation for that skill set and as my first formal step toward the PMI Project Management Professional (PMP) credential. The program covered project initiation, planning, execution, monitoring and controlling, and closing across both traditional and agile methodologies, and gave me the framework I now apply to managing JCAM rollouts, ISCM strategy implementation, and IT modernization deliverables. It also gave me the contact hours and theoretical grounding needed to prepare for the PMP exam, which is my next certification target.`,
   },
+  {
+    name:    'ISACA Certified Information Security Manager',
+    code:    null,
+    issuer:  'ISACA',
+    period:  'September 2026 – Present',
+    pdfUrl:  null,
+    description: `Recently earned. Full write-up coming soon.`,
+  },
 ]
 
 const inProgressCerts = [
@@ -62,25 +70,25 @@ const inProgressCerts = [
     name:     'Project Management Professional',
     code:     'PMP',
     issuer:   'Project Management Institute (PMI)',
-    expected: 'August 2026',
+    expected: 'December 2026',
   },
   {
-    name:     'Certified Information Systems Auditor',
+    name:     'ISACA Certified Information Systems Auditor',
     code:     'CISA',
     issuer:   'ISACA',
-    expected: 'November 2026',
-  },
-  {
-    name:     'Certified Information Security Manager',
-    code:     'CISM',
-    issuer:   'ISACA',
-    expected: 'February 2027',
+    expected: 'March 2027',
   },
   {
     name:     'Certified Cloud Security Professional',
     code:     'CCSP',
     issuer:   'ISC²',
-    expected: 'May 2027',
+    expected: 'June 2027',
+  },
+  {
+    name:     'Certified Information Systems Security Professional',
+    code:     'CISSP',
+    issuer:   'ISC²',
+    expected: 'September 2027',
   },
 ]
 

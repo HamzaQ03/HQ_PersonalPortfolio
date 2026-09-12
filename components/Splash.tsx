@@ -50,7 +50,6 @@ export default function Splash() {
   const skipSplash = pathname?.startsWith('/dashboard') ?? false
   const [mounted, setMounted] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
-  const [videoReady, setVideoReady] = useState(false)
   // Drive the fade-out in state so the CSS keyframe animation isn't a
   // single point of failure. Same stuck-at-currentTime-0 class of bug
   // we just hit on the home-page-reveal CSS animation: if the browser
@@ -59,6 +58,9 @@ export default function Splash() {
   // timing leaves a residual black frame. A JS-driven opacity is
   // guaranteed to take effect since it's just an inline style write.
   const [overlayOpacity, setOverlayOpacity] = useState(1)
+  // Fade-out duration flips to a fast value when the user clicks Skip
+  // so the opacity transition finishes before setSplashDone() unmounts.
+  const [fastFade, setFastFade] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   // Stash the router in a ref so the mount/unmount effect below
   // doesn't have to take `router` as a dep. If `useRouter()` were
@@ -67,6 +69,10 @@ export default function Splash() {
   // would never reach /home or unmount.
   const routerRef = useRef(router)
   routerRef.current = router
+  // All pending timers live in this ref so the Skip button can clear
+  // every one of them in a single sweep without the effect having to
+  // re-run to tear them down.
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
     setMounted(true)
@@ -82,48 +88,53 @@ export default function Splash() {
     // Lock body scroll while splash is visible
     document.body.style.overflow = 'hidden'
 
-    // Hold the blur + signature offscreen for 2.5s so the user gets
-    // a clean view of the city video first. After 2.5s, videoReady
-    // flips true → blur fades in (0.5s) and the signature mask reveal
-    // begins (5s after a 0.15s pre-roll). canPlayThrough on the video
-    // is intentionally NOT wired up here so the 2.5s minimum hold is
-    // guaranteed even on fast connections.
-    const videoFallback = setTimeout(() => {
-      setVideoReady(true)
-    }, 2500)
+    const timers = timersRef.current
 
     // Navigate to /home behind the overlay so it is loaded and
     // rendered underneath well before the Phase 6 fade-out.
-    const navTimer = setTimeout(() => {
+    timers.push(setTimeout(() => {
       routerRef.current.push('/home')
-    }, 300)
+    }, 300))
 
-    // Timeline after the 2.5s pre-roll:
-    //   2.5s   blur + signature mount
-    //   2.65s  signature mask reveal begins (5s)
-    //   7.65s  signature complete, underline starts (1s)
-    //   8.65s  underline complete, dot lands (0.4s)
-    //   9.05s  dot landed → 0.55s dramatic pause
-    //   9.6s   splash fade-out begins (1.2s)
-    //   10.8s  splash unmounts, /home visible
-    const fadeStartTimer = setTimeout(() => {
+    // Timeline (no pre-roll — signature starts tracing at t=0):
+    //   0s     signature mask reveal begins (5s)
+    //   5s     signature complete, underline starts (1s)
+    //   6s     underline complete, dot lands (0.4s)
+    //   6.4s   dot landed → 0.6s dramatic pause
+    //   7s     splash fade-out begins (1.2s)
+    //   8.2s   splash unmounts, /home visible
+    timers.push(setTimeout(() => {
       setOverlayOpacity(0)
-    }, 9800)
+    }, 7000))
 
-    const doneTimer = setTimeout(() => {
+    timers.push(setTimeout(() => {
       document.body.style.overflow = ''
       routerRef.current.push('/home')
       setSplashDone(true)
-    }, 11000)
+    }, 8200))
 
     return () => {
-      clearTimeout(videoFallback)
-      clearTimeout(navTimer)
-      clearTimeout(fadeStartTimer)
-      clearTimeout(doneTimer)
+      timers.forEach(clearTimeout)
+      timersRef.current = []
       document.body.style.overflow = ''
     }
-  }, [mounted])
+  }, [mounted, skipSplash])
+
+  function handleSkip() {
+    // Kill every pending timer so the fade-out and done handlers don't
+    // fire on top of the skip flow and re-trigger navigation mid-fade.
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
+    setFastFade(true)
+    setOverlayOpacity(0)
+    // Push /home in parallel with the fade-out — chunk load starts
+    // during the 0.35s fade so the home page is ready underneath.
+    routerRef.current.push('/home')
+    setTimeout(() => {
+      document.body.style.overflow = ''
+      setSplashDone(true)
+    }, 350)
+  }
 
   // Note on video playback: the previous reverse-loop trick (forward
   // play, then step currentTime backward via rAF every animation
@@ -148,7 +159,7 @@ export default function Splash() {
         // JS-driven fade instead of a CSS keyframe — see the
         // overlayOpacity state comment in the component for context.
         opacity: overlayOpacity,
-        transition: 'opacity 1.2s ease-in-out',
+        transition: fastFade ? 'opacity 350ms ease-out' : 'opacity 1.2s ease-in-out',
       }}
       aria-hidden="true"
     >
@@ -228,20 +239,18 @@ export default function Splash() {
         }}
       />
 
-      {/* Dim overlay for signature contrast — fades in at the 2.5s
-          mark to dim the city video so the white signature reads
-          clearly. Uses opacity only (single composite op per frame,
-          near-zero GPU cost). Replaced the previous filter: blur on
-          the video, which forced a blur shader to run on every video
-          frame and was the root cause of the splash playback lag. */}
+      {/* Dim overlay for signature contrast — visible from t=0 so the
+          white signature reads clearly the moment the splash mounts.
+          Uses opacity only (single composite op per frame, near-zero
+          GPU cost). Replaced the previous filter: blur on the video,
+          which forced a blur shader to run on every video frame and
+          was the root cause of the splash playback lag. */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.55)',
-          opacity: videoReady ? 1 : 0,
-          transition: 'opacity 0.3s ease-out',
           pointerEvents: 'none',
           zIndex: 5,
         }}
@@ -250,14 +259,12 @@ export default function Splash() {
 
 
 
-      {/* Signature composition + the full-screen backdrop blur layer
-          — both mount once the video can play through (or the 1.5s
-          fallback fires). The blur fades in over 0.5s while the
-          signature SVG sits in its 0.15s pre-roll, so by the time
-          the signature begins tracing the blur is fully in. The blur
-          stays through the entire reveal and fades out with the
-          splash overlay at 7.3s. */}
-      {videoReady && (
+      {/* Signature composition — mounts at t=0 so the mask reveal
+          starts tracing the moment the splash appears (no pre-roll).
+          The dim overlay above provides contrast against the city
+          video, and the fade-out at 7s carries the whole thing off
+          together. */}
+      {(
         <div
             style={{
               position: 'absolute',
@@ -307,7 +314,7 @@ export default function Splash() {
               maskRepeat: 'no-repeat',
               WebkitMaskRepeat: 'no-repeat',
               animation:
-                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0.2s both',
+                'splashMaskReveal 5s cubic-bezier(0.55, 0.05, 0.25, 1) 0s both',
               willChange: 'mask-position',
               backfaceVisibility: 'hidden',
             }}
@@ -340,7 +347,7 @@ export default function Splash() {
                 strokeDasharray: 1200,
                 strokeDashoffset: 1200,
                 animation:
-                  'splashUnderlineDraw 1.0s ease-out 5.2s forwards',
+                  'splashUnderlineDraw 1.0s ease-out 5.0s forwards',
                 willChange: 'stroke-dashoffset',
               }}
             />
@@ -353,13 +360,41 @@ export default function Splash() {
                 opacity: 0,
                 transformOrigin: '890px 11px',
                 animation:
-                  'splashDotLand 0.4s ease-out 6.2s forwards',
+                  'splashDotLand 0.4s ease-out 6.0s forwards',
                 willChange: 'transform, opacity',
               }}
             />
           </svg>
         </div>
       )}
+
+      {/* Skip button — lets impatient / repeat visitors bypass the
+          cinematic intro. Positioned bottom-right, unobtrusive taupe
+          on the darkened backdrop. handleSkip clears every pending
+          timer, fast-fades the overlay in 350ms, and pushes /home. */}
+      <button
+        className="splash-skip-btn"
+        onClick={handleSkip}
+        aria-label="Skip animation"
+        style={{
+          position: 'absolute',
+          bottom: 32,
+          right: 32,
+          zIndex: 20,
+          background: 'transparent',
+          border: '2px solid #ffffff',
+          borderRadius: 4,
+          color: '#ffffff',
+          padding: '14px 28px',
+          fontFamily: 'monospace',
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: 2.5,
+          transition: 'background 200ms ease, color 200ms ease, border-color 200ms ease',
+        }}
+      >
+        SKIP ANIMATION ›
+      </button>
     </div>,
     document.body
   )
