@@ -375,24 +375,25 @@ export default function Splash() {
       <button
         className="splash-skip-btn"
         onClick={handleSkip}
-        aria-label="Skip intro"
+        aria-label="Skip animation"
         style={{
           position: 'absolute',
           bottom: 32,
           right: 32,
           zIndex: 20,
           background: 'transparent',
-          border: '1px solid rgba(200, 168, 124, 0.4)',
+          border: '2px solid #ffffff',
           borderRadius: 4,
-          color: '#c8a87c',
-          padding: '10px 18px',
+          color: '#ffffff',
+          padding: '14px 28px',
           fontFamily: 'monospace',
-          fontSize: 11,
-          letterSpacing: 2,
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: 2.5,
           transition: 'background 200ms ease, color 200ms ease, border-color 200ms ease',
         }}
       >
-        SKIP ›
+        SKIP ANIMATION ›
       </button>
     </div>,
     document.body
